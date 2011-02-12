@@ -1,0 +1,704 @@
+# depslib dependency file v1.0
+1297468055 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/comm/outputParse.c
+	<stdio.h>
+	<stdint.h>
+	<string.h>
+	<avr/io.h>
+	<util/delay.h>
+	<avr/pgmspace.h>
+	<avr/eeprom.h>
+	"../dataStructures.h"
+	"../progmemVars.h"
+	"../logging/openlog.h"
+	"outputParse.h"
+
+1292657941 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/dataStructures.h
+
+1297472471 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/progmemVars.h
+	<avr/pgmspace.h>
+
+1297466756 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/logging/openlog.h
+
+1292126383 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/comm/outputParse.h
+
+1297454763 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/bmp085.c
+	<stdio.h>
+	<stdint.h>
+	<util/delay.h>
+	<avr/eeprom.h>
+	"i2c.h"
+	"bmp085.h"
+
+1296861729 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/i2c.h
+
+1292126383 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/bmp085.h
+
+1297454780 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/ds3231.c
+	<stdio.h>
+	<stdint.h>
+	<util/delay.h>
+	<avr/io.h>
+	"i2c.h"
+	"ds3231.h"
+
+1292126383 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/ds3231.h
+
+1296863073 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/i2c.c
+	<avr/io.h>
+	<avr/interrupt.h>
+	<stdio.h>
+	<stdint.h>
+	<util/delay.h>
+	<util/twi.h>
+	"i2c.h"
+
+1297454792 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/tmp100.c
+	<stdio.h>
+	<stdint.h>
+	"i2c.h"
+	"tmp100.h"
+
+1292717315 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/tmp100.h
+
+1281579115 /usr/lib/avr/include/stdio.h
+	<inttypes.h>
+	<stdarg.h>
+	<stddef.h>
+	<stdio.h>
+
+1281579115 /usr/lib/avr/include/inttypes.h
+	<stdint.h>
+	<inttypes.h>
+
+1281579115 /usr/lib/avr/include/stdint.h
+
+1281579114 /usr/lib/avr/include/avr/io.h
+	<avr/sfr_defs.h>
+	<avr/portpins.h>
+	<avr/common.h>
+	<avr/version.h>
+	<avr/sfr_defs.h>
+	<avr/ioat94k.h>
+	<avr/io43u32x.h>
+	<avr/io43u35x.h>
+	<avr/io76c711.h>
+	<avr/io86r401.h>
+	<avr/io90pwm1.h>
+	<avr/io90pwmx.h>
+	<avr/io90pwm2b.h>
+	<avr/io90pwmx.h>
+	<avr/io90pwm3b.h>
+	<avr/io90pwm216.h>
+	<avr/io90pwm316.h>
+	<avr/io90pwm81.h>
+	<avr/iom8u2.h>
+	<avr/iom16m1.h>
+	<avr/iom16u2.h>
+	<avr/iom16u4.h>
+	<avr/iom32c1.h>
+	<avr/iom32m1.h>
+	<avr/iom32u2.h>
+	<avr/iom32u4.h>
+	<avr/iom32u6.h>
+	<avr/iom64c1.h>
+	<avr/iom64m1.h>
+	<avr/iom128.h>
+	<avr/iom1280.h>
+	<avr/iom1281.h>
+	<avr/iom1284p.h>
+	<avr/iom128rfa1.h>
+	<avr/iom2560.h>
+	<avr/iom2561.h>
+	<avr/iocan32.h>
+	<avr/iocan64.h>
+	<avr/iocan128.h>
+	<avr/iousb82.h>
+	<avr/iousb162.h>
+	<avr/iousb646.h>
+	<avr/iousb647.h>
+	<avr/iousb1286.h>
+	<avr/iousb1287.h>
+	<avr/iom64.h>
+	<avr/iom640.h>
+	<avr/iom644.h>
+	<avr/iom644p.h>
+	<avr/iom644pa.h>
+	<avr/iom645.h>
+	<avr/iom6450.h>
+	<avr/iom649.h>
+	<avr/iom6490.h>
+	<avr/iom649p.h>
+	<avr/iom64hve.h>
+	<avr/iom103.h>
+	<avr/iom32.h>
+	<avr/iom323.h>
+	<avr/iom324.h>
+	<avr/iom324pa.h>
+	<avr/iom325.h>
+	<avr/iom325.h>
+	<avr/iom3250.h>
+	<avr/iom3250.h>
+	<avr/iom328p.h>
+	<avr/iom329.h>
+	<avr/iom329.h>
+	<avr/iom3290.h>
+	<avr/iom3290.h>
+	<avr/iom32hvb.h>
+	<avr/iom406.h>
+	<avr/iom16.h>
+	<avr/iom16a.h>
+	<avr/iom161.h>
+	<avr/iom162.h>
+	<avr/iom163.h>
+	<avr/iom164.h>
+	<avr/iom165.h>
+	<avr/iom165p.h>
+	<avr/iom168.h>
+	<avr/iom168p.h>
+	<avr/iom169.h>
+	<avr/iom169p.h>
+	<avr/iom169pa.h>
+	<avr/iom8hva.h>
+	<avr/iom16hva.h>
+	<avr/iom16hva2.h>
+	<avr/iom16hvb.h>
+	<avr/iom8.h>
+	<avr/iom48.h>
+	<avr/iom48p.h>
+	<avr/iom88.h>
+	<avr/iom88p.h>
+	<avr/iom88pa.h>
+	<avr/iom8515.h>
+	<avr/iom8535.h>
+	<avr/io8535.h>
+	<avr/io8534.h>
+	<avr/io8515.h>
+	<avr/io4434.h>
+	<avr/io4433.h>
+	<avr/io4414.h>
+	<avr/iotn22.h>
+	<avr/iotn26.h>
+	<avr/io2343.h>
+	<avr/io2333.h>
+	<avr/io2323.h>
+	<avr/io2313.h>
+	<avr/iotn2313.h>
+	<avr/iotn2313a.h>
+	<avr/iotn13.h>
+	<avr/iotn13a.h>
+	<avr/iotn25.h>
+	<avr/iotn4313.h>
+	<avr/iotn45.h>
+	<avr/iotn85.h>
+	<avr/iotn24.h>
+	<avr/iotn24a.h>
+	<avr/iotn44.h>
+	<avr/iotn44a.h>
+	<avr/iotn84.h>
+	<avr/iotn261.h>
+	<avr/iotn261a.h>
+	<avr/iotn461.h>
+	<avr/iotn461a.h>
+	<avr/iotn861.h>
+	<avr/iotn861a.h>
+	<avr/iotn43u.h>
+	<avr/iotn48.h>
+	<avr/iotn88.h>
+	<avr/iotn87.h>
+	<avr/iotn167.h>
+	<avr/io90scr100.h>
+	<avr/iox16a4.h>
+	<avr/iox16d4.h>
+	<avr/iox32a4.h>
+	<avr/iox32d4.h>
+	<avr/iox64a1.h>
+	<avr/iox64a3.h>
+	<avr/iox64d3.h>
+	<avr/iox128a1.h>
+	<avr/iox128a3.h>
+	<avr/iox128d3.h>
+	<avr/iox192a3.h>
+	<avr/iox192d3.h>
+	<avr/iox256a3.h>
+	<avr/iox256a3b.h>
+	<avr/iox256d3.h>
+	<avr/ioa6289.h>
+	<avr/iotn28.h>
+	<avr/io1200.h>
+	<avr/iotn15.h>
+	<avr/iotn12.h>
+	<avr/iotn11.h>
+	<avr/portpins.h>
+	<avr/common.h>
+	<avr/version.h>
+	<avr/fuse.h>
+	<avr/lock.h>
+
+1281579115 /usr/lib/avr/include/avr/sfr_defs.h
+	<inttypes.h>
+
+1281579115 /usr/lib/avr/include/avr/portpins.h
+
+1281579114 /usr/lib/avr/include/avr/common.h
+	<avr/sfr_defs.h>
+
+1281579115 /usr/lib/avr/include/avr/version.h
+
+1281579114 /usr/lib/avr/include/avr/ioat94k.h
+
+1281579114 /usr/lib/avr/include/avr/io43u32x.h
+
+1281579114 /usr/lib/avr/include/avr/io43u35x.h
+
+1281579114 /usr/lib/avr/include/avr/io76c711.h
+
+1281579114 /usr/lib/avr/include/avr/io86r401.h
+	<avr/sfr_defs.h>
+
+1281579114 /usr/lib/avr/include/avr/io90pwm1.h
+
+1281579114 /usr/lib/avr/include/avr/io90pwmx.h
+
+1281579114 /usr/lib/avr/include/avr/io90pwm2b.h
+
+1281579114 /usr/lib/avr/include/avr/io90pwm3b.h
+
+1281579114 /usr/lib/avr/include/avr/io90pwm216.h
+
+1281579114 /usr/lib/avr/include/avr/io90pwm316.h
+
+1281579114 /usr/lib/avr/include/avr/io90pwm81.h
+
+1281579114 /usr/lib/avr/include/avr/iom8u2.h
+
+1281579114 /usr/lib/avr/include/avr/iom16m1.h
+
+1281579114 /usr/lib/avr/include/avr/iom16u2.h
+
+1281579114 /usr/lib/avr/include/avr/iom16u4.h
+
+1281579114 /usr/lib/avr/include/avr/iom32c1.h
+
+1281579114 /usr/lib/avr/include/avr/iom32m1.h
+
+1281579114 /usr/lib/avr/include/avr/iom32u2.h
+
+1281579114 /usr/lib/avr/include/avr/iom32u4.h
+
+1281579114 /usr/lib/avr/include/avr/iom32u6.h
+
+1281579114 /usr/lib/avr/include/avr/iom64c1.h
+
+1281579114 /usr/lib/avr/include/avr/iom64m1.h
+
+1281579114 /usr/lib/avr/include/avr/iom128.h
+
+1281579114 /usr/lib/avr/include/avr/iom1280.h
+	<avr/iomxx0_1.h>
+
+1281579114 /usr/lib/avr/include/avr/iomxx0_1.h
+
+1281579114 /usr/lib/avr/include/avr/iom1281.h
+	<avr/iomxx0_1.h>
+
+1281579114 /usr/lib/avr/include/avr/iom1284p.h
+
+1281579114 /usr/lib/avr/include/avr/iom128rfa1.h
+	<avr/sfr_defs.h>
+
+1281579114 /usr/lib/avr/include/avr/iom2560.h
+	<avr/iomxx0_1.h>
+
+1281579114 /usr/lib/avr/include/avr/iom2561.h
+	<avr/iomxx0_1.h>
+
+1281579114 /usr/lib/avr/include/avr/iocan32.h
+	<avr/iocanxx.h>
+
+1281579114 /usr/lib/avr/include/avr/iocanxx.h
+
+1281579114 /usr/lib/avr/include/avr/iocan64.h
+	<avr/iocanxx.h>
+
+1281579114 /usr/lib/avr/include/avr/iocan128.h
+	<avr/iocanxx.h>
+
+1281579115 /usr/lib/avr/include/avr/iousb82.h
+	<avr/iousbxx2.h>
+
+1281579115 /usr/lib/avr/include/avr/iousbxx2.h
+
+1281579115 /usr/lib/avr/include/avr/iousb162.h
+	<avr/iousbxx2.h>
+
+1281579115 /usr/lib/avr/include/avr/iousb646.h
+	<avr/iousbxx6_7.h>
+
+1281579115 /usr/lib/avr/include/avr/iousbxx6_7.h
+
+1281579115 /usr/lib/avr/include/avr/iousb647.h
+	<avr/iousbxx6_7.h>
+
+1281579115 /usr/lib/avr/include/avr/iousb1286.h
+	<avr/iousbxx6_7.h>
+
+1281579115 /usr/lib/avr/include/avr/iousb1287.h
+	<avr/iousbxx6_7.h>
+
+1281579114 /usr/lib/avr/include/avr/iom64.h
+
+1281579114 /usr/lib/avr/include/avr/iom640.h
+	<avr/iomxx0_1.h>
+
+1281579114 /usr/lib/avr/include/avr/iom644.h
+	<avr/iomxx4.h>
+
+1281579114 /usr/lib/avr/include/avr/iomxx4.h
+
+1281579114 /usr/lib/avr/include/avr/iom644p.h
+	<avr/iomxx4.h>
+
+1281579114 /usr/lib/avr/include/avr/iom644pa.h
+
+1281579114 /usr/lib/avr/include/avr/iom645.h
+
+1281579114 /usr/lib/avr/include/avr/iom6450.h
+
+1281579114 /usr/lib/avr/include/avr/iom649.h
+
+1281579114 /usr/lib/avr/include/avr/iom6490.h
+
+1281579114 /usr/lib/avr/include/avr/iom649p.h
+
+1281579114 /usr/lib/avr/include/avr/iom64hve.h
+
+1281579114 /usr/lib/avr/include/avr/iom103.h
+
+1281579114 /usr/lib/avr/include/avr/iom32.h
+
+1281579114 /usr/lib/avr/include/avr/iom323.h
+
+1281579114 /usr/lib/avr/include/avr/iom324.h
+	<avr/iomxx4.h>
+
+1281579114 /usr/lib/avr/include/avr/iom324pa.h
+
+1281579114 /usr/lib/avr/include/avr/iom325.h
+
+1281579114 /usr/lib/avr/include/avr/iom3250.h
+
+1281579114 /usr/lib/avr/include/avr/iom328p.h
+
+1281579114 /usr/lib/avr/include/avr/iom329.h
+
+1281579114 /usr/lib/avr/include/avr/iom3290.h
+
+1281579114 /usr/lib/avr/include/avr/iom32hvb.h
+
+1281579114 /usr/lib/avr/include/avr/iom406.h
+
+1281579114 /usr/lib/avr/include/avr/iom16.h
+
+1281579114 /usr/lib/avr/include/avr/iom16a.h
+
+1281579114 /usr/lib/avr/include/avr/iom161.h
+
+1281579114 /usr/lib/avr/include/avr/iom162.h
+
+1281579114 /usr/lib/avr/include/avr/iom163.h
+
+1281579114 /usr/lib/avr/include/avr/iom164.h
+	<avr/iomxx4.h>
+
+1281579114 /usr/lib/avr/include/avr/iom165.h
+
+1281579114 /usr/lib/avr/include/avr/iom165p.h
+
+1281579114 /usr/lib/avr/include/avr/iom168.h
+	<avr/iomx8.h>
+
+1281579114 /usr/lib/avr/include/avr/iomx8.h
+
+1281579114 /usr/lib/avr/include/avr/iom168p.h
+
+1281579114 /usr/lib/avr/include/avr/iom169.h
+
+1281579114 /usr/lib/avr/include/avr/iom169p.h
+
+1281579114 /usr/lib/avr/include/avr/iom169pa.h
+
+1281579114 /usr/lib/avr/include/avr/iom8hva.h
+	<avr/iomxxhva.h>
+
+1281579114 /usr/lib/avr/include/avr/iomxxhva.h
+
+1281579114 /usr/lib/avr/include/avr/iom16hva.h
+	<avr/iomxxhva.h>
+
+1281579114 /usr/lib/avr/include/avr/iom16hva2.h
+
+1281579114 /usr/lib/avr/include/avr/iom16hvb.h
+
+1281579114 /usr/lib/avr/include/avr/iom8.h
+
+1281579114 /usr/lib/avr/include/avr/iom48.h
+	<avr/iomx8.h>
+
+1281579114 /usr/lib/avr/include/avr/iom48p.h
+
+1281579114 /usr/lib/avr/include/avr/iom88.h
+	<avr/iomx8.h>
+
+1281579114 /usr/lib/avr/include/avr/iom88p.h
+
+1281579114 /usr/lib/avr/include/avr/iom88pa.h
+
+1281579114 /usr/lib/avr/include/avr/iom8515.h
+
+1281579114 /usr/lib/avr/include/avr/iom8535.h
+
+1281579114 /usr/lib/avr/include/avr/io8535.h
+
+1281579114 /usr/lib/avr/include/avr/io8534.h
+
+1281579114 /usr/lib/avr/include/avr/io8515.h
+
+1281579114 /usr/lib/avr/include/avr/io4434.h
+
+1281579114 /usr/lib/avr/include/avr/io4433.h
+
+1281579114 /usr/lib/avr/include/avr/io4414.h
+
+1281579115 /usr/lib/avr/include/avr/iotn22.h
+
+1281579115 /usr/lib/avr/include/avr/iotn26.h
+
+1281579114 /usr/lib/avr/include/avr/io2343.h
+
+1281579114 /usr/lib/avr/include/avr/io2333.h
+
+1281579114 /usr/lib/avr/include/avr/io2323.h
+
+1281579114 /usr/lib/avr/include/avr/io2313.h
+
+1281579115 /usr/lib/avr/include/avr/iotn2313.h
+
+1281579115 /usr/lib/avr/include/avr/iotn2313a.h
+
+1281579115 /usr/lib/avr/include/avr/iotn13.h
+
+1281579115 /usr/lib/avr/include/avr/iotn13a.h
+
+1281579115 /usr/lib/avr/include/avr/iotn25.h
+	<avr/iotnx5.h>
+
+1281579115 /usr/lib/avr/include/avr/iotnx5.h
+
+1281579115 /usr/lib/avr/include/avr/iotn4313.h
+
+1281579115 /usr/lib/avr/include/avr/iotn45.h
+	<avr/iotnx5.h>
+
+1281579115 /usr/lib/avr/include/avr/iotn85.h
+	<avr/iotnx5.h>
+
+1281579115 /usr/lib/avr/include/avr/iotn24.h
+	<avr/iotnx4.h>
+
+1281579115 /usr/lib/avr/include/avr/iotnx4.h
+
+1281579115 /usr/lib/avr/include/avr/iotn24a.h
+
+1281579115 /usr/lib/avr/include/avr/iotn44.h
+	<avr/iotnx4.h>
+
+1281579115 /usr/lib/avr/include/avr/iotn44a.h
+
+1281579115 /usr/lib/avr/include/avr/iotn84.h
+	<avr/iotnx4.h>
+
+1281579115 /usr/lib/avr/include/avr/iotn261.h
+	<avr/iotnx61.h>
+
+1281579115 /usr/lib/avr/include/avr/iotnx61.h
+
+1281579115 /usr/lib/avr/include/avr/iotn261a.h
+
+1281579115 /usr/lib/avr/include/avr/iotn461.h
+	<avr/iotnx61.h>
+
+1281579115 /usr/lib/avr/include/avr/iotn461a.h
+
+1281579115 /usr/lib/avr/include/avr/iotn861.h
+	<avr/iotnx61.h>
+
+1281579115 /usr/lib/avr/include/avr/iotn861a.h
+
+1281579115 /usr/lib/avr/include/avr/iotn43u.h
+
+1281579115 /usr/lib/avr/include/avr/iotn48.h
+
+1281579115 /usr/lib/avr/include/avr/iotn88.h
+
+1281579115 /usr/lib/avr/include/avr/iotn87.h
+
+1281579115 /usr/lib/avr/include/avr/iotn167.h
+
+1281579114 /usr/lib/avr/include/avr/io90scr100.h
+
+1281579115 /usr/lib/avr/include/avr/iox16a4.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox16d4.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox32a4.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox32d4.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox64a1.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox64a3.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox64d3.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox128a1.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox128a3.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox128d3.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox192a3.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox192d3.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox256a3.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox256a3b.h
+	<stdint.h>
+
+1281579115 /usr/lib/avr/include/avr/iox256d3.h
+	<stdint.h>
+
+1281579114 /usr/lib/avr/include/avr/ioa6289.h
+
+1281579115 /usr/lib/avr/include/avr/iotn28.h
+
+1281579114 /usr/lib/avr/include/avr/io1200.h
+
+1281579115 /usr/lib/avr/include/avr/iotn15.h
+
+1281579115 /usr/lib/avr/include/avr/iotn12.h
+
+1281579115 /usr/lib/avr/include/avr/iotn11.h
+
+1281579114 /usr/lib/avr/include/avr/fuse.h
+	<avr/io.h>
+	<avr/io.h>
+	<avr/io.h>
+
+1281579115 /usr/lib/avr/include/avr/lock.h
+	<avr/io.h>
+	<avr/io.h>
+
+1281579115 /usr/lib/avr/include/util/delay.h
+	<inttypes.h>
+	<util/delay_basic.h>
+	<util/delay.h>
+
+1281579115 /usr/lib/avr/include/util/delay_basic.h
+	<inttypes.h>
+	<util/delay_basic.h>
+
+1281579115 /usr/lib/avr/include/avr/pgmspace.h
+	<avr/io.h>
+	<avr/pgmspace.h>
+	<inttypes.h>
+	<stddef.h>
+	<avr/io.h>
+
+1281579114 /usr/lib/avr/include/avr/eeprom.h
+	<avr/io.h>
+	<stddef.h>
+	<stdint.h>
+
+1281579114 /usr/lib/avr/include/avr/interrupt.h
+	<avr/io.h>
+
+1281579115 /usr/lib/avr/include/util/twi.h
+	<avr/io.h>
+
+1297045347 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/logging/openlog.c
+	<stdio.h>
+	<stdint.h>
+	<avr/io.h>
+	<util/delay.h>
+	"../dataStructures.h"
+	"openlog.h"
+
+1297471526 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/main.c
+	<stdio.h>
+	<stdint.h>
+	<avr/io.h>
+	<util/delay.h>
+	<string.h>
+	<avr/interrupt.h>
+	<avr/eeprom.h>
+	<avr/pgmspace.h>
+	"lib/i2c.h"
+	"lib/tmp100.h"
+	"lib/bmp085.h"
+	"lib/ds3231.h"
+	"parsing/epoch.h"
+	"parsing/gps.h"
+	"comm/outputParse.h"
+	"logging/openlog.h"
+	"queue.h"
+	"dataStructures.h"
+
+1292126383 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/parsing/epoch.h
+
+1297464879 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/parsing/gps.h
+	"../dataStructures.h"
+
+1293925726 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/queue.h
+	"dataStructures.h"
+
+1297464911 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/parsing/epoch.c
+	<stdio.h>
+	<stdint.h>
+	<util/delay.h>
+	"../lib/i2c.h"
+	"epoch.h"
+	<avr/eeprom.h>
+	"../eepromVars.h"
+
+1297045591 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/eepromVars.h
+	<avr/eeprom.h>
+
+1297471015 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/parsing/gps.c
+	<stdio.h>
+	<stdint.h>
+	<string.h>
+	<avr/pgmspace.h>
+	"gps.h"
+
+1292126383 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/queue.c
+	<stdio.h>
+	<stdint.h>
+	<string.h>
+	<avr/io.h>
+	"dataStructures.h"
+	"queue.h"
+
