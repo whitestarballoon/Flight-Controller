@@ -45,9 +45,11 @@ int8_t EEMEM EEbatteryHeaterSetpoint;
 
 uint16_t EEMEM EEdataCollectionInterval;  //Var 0x03
 uint16_t EEMEM EEdataTransmitInterval;  //Var 0x04
+uint16_t EEMEM EEshortDataTransmitInterval;
 
 uint16_t EEMEM EEhfDataTransmitInterval;
 uint8_t EEMEM EEhfRapidTransmit;
+
 
 uint32_t EEMEM EEepochOfLastBatchTransmit;
 
@@ -75,12 +77,12 @@ int16_t EEMEM EEvSpeedHolderSamples[VSPEEDSAMPLESDESIRED];
 
 //Needed for BMP085
 short EEMEM EEBMPac1;
-short EEMEM EEBMPac2; 
-short EEMEM EEBMPac3; 
+short EEMEM EEBMPac2;
+short EEMEM EEBMPac3;
 unsigned short EEMEM EEBMPac4;
 unsigned short EEMEM EEBMPac5;
 unsigned short EEMEM EEBMPac6;
-short EEMEM EEBMPb1; 
+short EEMEM EEBMPb1;
 short EEMEM EEBMPb2;
 short EEMEM EEBMPmb;
 short EEMEM EEBMPmc;

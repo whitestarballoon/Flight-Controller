@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1297468055 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/comm/outputParse.c
+1298075086 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/comm/outputParse.c
 	<stdio.h>
 	<stdint.h>
 	<string.h>
@@ -10,14 +10,15 @@
 	"../dataStructures.h"
 	"../progmemVars.h"
 	"../logging/openlog.h"
+	"../lib/i2c.h"
 	"outputParse.h"
 
 1292657941 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/dataStructures.h
 
-1297472471 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/progmemVars.h
+1297969849 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/progmemVars.h
 	<avr/pgmspace.h>
 
-1297466756 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/logging/openlog.h
+1297796730 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/logging/openlog.h
 
 1292126383 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/comm/outputParse.h
 
@@ -29,7 +30,7 @@
 	"i2c.h"
 	"bmp085.h"
 
-1296861729 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/i2c.h
+1298073529 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/i2c.h
 
 1292126383 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/lib/bmp085.h
 
@@ -639,7 +640,7 @@
 1281579115 /usr/lib/avr/include/util/twi.h
 	<avr/io.h>
 
-1297045347 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/logging/openlog.c
+1298007806 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/logging/openlog.c
 	<stdio.h>
 	<stdint.h>
 	<avr/io.h>
@@ -647,7 +648,7 @@
 	"../dataStructures.h"
 	"openlog.h"
 
-1297471526 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/main.c
+1298074286 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/main.c
 	<stdio.h>
 	<stdint.h>
 	<avr/io.h>
@@ -675,7 +676,7 @@
 1293925726 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/queue.h
 	"dataStructures.h"
 
-1297464911 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/parsing/epoch.c
+1297803282 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/parsing/epoch.c
 	<stdio.h>
 	<stdint.h>
 	<util/delay.h>
@@ -684,10 +685,10 @@
 	<avr/eeprom.h>
 	"../eepromVars.h"
 
-1297045591 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/eepromVars.h
+1297476419 /home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/eepromVars.h
 	<avr/eeprom.h>
 
-1297471015 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/parsing/gps.c
+1297478793 source:/home/bradluyster/Dev/git/LVL1-Transatlantic-Balloon/Software/fcpu/WSB Flight Computer/parsing/gps.c
 	<stdio.h>
 	<stdint.h>
 	<string.h>
@@ -701,4 +702,7 @@
 	<avr/io.h>
 	"dataStructures.h"
 	"queue.h"
+
+1281579115 /usr/lib/avr/include/string.h
+	<stddef.h>
 

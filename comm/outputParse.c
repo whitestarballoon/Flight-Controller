@@ -14,19 +14,27 @@
 #include "../progmemVars.h"
 #include "../logging/openlog.h"
 
+#include "../lib/i2c.h"
+
 #include "outputParse.h"
 
 #define opdebug
 
 //if commented out, no eeprom writing
-//#define detacheeprom
+#define detacheeprom
 
 
 #define COMPROM 0b10100000
 
 
 extern int lprintf(char *, ...);
+extern int lprintf_P(const char *str, ...);
 extern uint16_t EEMEM EEcurrentTelemetryVersion;
+extern uint8_t i2cMasterSendNI(uint8_t, uint8_t, uint8_t*);
+extern void i2cSendStart(void);
+extern uint8_t i2cWaitForComplete(void);
+extern void i2cSendByte(uint8_t);
+extern void i2cSendStop(void);
 
 uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, uint16_t batch)
 {
@@ -53,14 +61,28 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 	}
 	//Bitmask reversal words
 
-	char sampleHolder[SAMPLESTRINGSIZEINCHARS];
+	/*lprintf("%lx ", bitmask[0]);
+	lprintf("%lx ", bitmask[1]);
+	lprintf("%lx\n", bitmask[2]);
+    lprintf("%lx ", reversedBitmask[0]);
+	lprintf("%lx ", reversedBitmask[1]);
+	lprintf("%lx\n", reversedBitmask[2]);*/
 
+	char sampleHolder[SAMPLESTRINGSIZEINCHARS+5];
+
+    memset(sampleHolder, 0, SAMPLESTRINGSIZEINCHARS+5);
 	getDataSample(sampleNumber, sampleHolder);
 	//Sample Retrieval words
 	#ifdef opdebug
 		lprintf("ISAMP: %d\n", sampleNumber);
-		lprintf("%s\n", sampleHolder);
+        for(int i = 0; i < SAMPLESTRINGSIZEINCHARS; i++)
+        {
+            lprintf("%c", sampleHolder[i]);
+        }
+		lprintf("\n");
 	#endif
+
+	//lprintf("done\n");
 
 	uint8_t currentTelemetryChannel = 0;
 	uint8_t bytesWritten = 0;
@@ -73,21 +95,42 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 	uint32_t epochSample;
 	sscanf(token, "%ld", &epochSample);
 
+	//lprintf("\nep: %s\n", token);
+
 	output[0] = eeprom_read_word(&EEcurrentTelemetryVersion) >> 8;
 	output[1] = eeprom_read_word(&EEcurrentTelemetryVersion);
 
 	bytesWritten +=2;
-	memcpy(output[2], bitmask, sizeof(uint32_t)*3);
+
+    output[2] = bitmask[0] >> 24;
+    output[3] = bitmask[0] >> 16;
+    output[4] = bitmask[0] >> 8;
+    output[5] = bitmask[0];
+    output[6] = bitmask[1] >> 24;
+    output[7] = bitmask[1] >> 16;
+    output[8] = bitmask[1] >> 8;
+    output[9] = bitmask[1];
+    output[10] = bitmask[2] >> 24;
+    output[11] = bitmask[2] >> 16;
+    output[12] = bitmask[2] >> 8;
+    output[13] = bitmask[2];
+
 
 	bytesWritten +=sizeof(uint32_t)*3;
 
+
+
 	output[bytesWritten] = epochSample >> 24;
+	//lprintf("%x ", output[bytesWritten]);
 	bytesWritten++;
 	output[bytesWritten] = epochSample >> 16;
+	//lprintf("%x ", output[bytesWritten]);
 	bytesWritten++;
 	output[bytesWritten] = epochSample >> 8;
+	//lprintf("%x ", output[bytesWritten]);
 	bytesWritten++;
 	output[bytesWritten] = epochSample;
+	//lprintf("%x\n", output[bytesWritten]);
 	bytesWritten++;
 	output[bytesWritten] = batch >> 8;
 	bytesWritten++;
@@ -100,7 +143,10 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 	{
 		token = strtok(NULL,",");
 
-		lprintf("L: %d V: %lx\n", currentTelemetryChannel/32, reversedBitmask[currentTelemetryChannel/32] );
+		//lprintf("L: %d V: %lx\n", currentTelemetryChannel/32, reversedBitmask[currentTelemetryChannel/32] );
+        //lprintf("P: %lx\n", reversedBitmask[0]);
+        //lprintf("P: %lx\n", reversedBitmask[1]);
+        //lprintf("P: %lx\n", reversedBitmask[2]);
 		if(reversedBitmask[currentTelemetryChannel/32] & 1 == 1)
 		{
 			//lprintf("Tof: %d\n", pgm_read_byte(&bitmaskTypeOrder[currentTelemetryChannel]));
@@ -141,8 +187,9 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 			}
 		}
 
+        reversedBitmask[currentTelemetryChannel/32] >>= 1;
 		currentTelemetryChannel++;
-		reversedBitmask[currentTelemetryChannel/32] >>= 1;
+
 	} while(reversedBitmask[0] != 0 || reversedBitmask[1] != 0 || reversedBitmask[2] != 0);
 
 	return bytesWritten;
@@ -153,6 +200,7 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 void loadBatch(void)
 {
 
+    //lprintf_P(PSTR("LB\n"));
 	uint16_t batchSampleStart = eeprom_read_word(&EEbatchSampleStart);
 	uint16_t batchSampleEnd = eeprom_read_word(&EEbatchSampleEnd);
 	uint16_t batchNumber = eeprom_read_word(&EEcurrentBatchNumber);
@@ -164,11 +212,10 @@ void loadBatch(void)
 
 	uint16_t commPromEnd = eeprom_read_word(&EEcommPromEnd);
 
-	for(int i=batchSampleStart; i < batchSampleEnd; i++)
+	for(uint16_t i=batchSampleStart; i < batchSampleEnd; i++)
 	{
 		uint8_t thisSample[MAXTXSAMPLESIZE];
 		uint8_t sizeOfSample;
-		lprintf("i: %d\n", i);
 		sizeOfSample = getTxSample(thisSample, currentBitmask, i, batchNumber);
 		#ifdef opdebug
 			lprintf("A Sample: ");
@@ -176,14 +223,14 @@ void loadBatch(void)
 		for(int j=0; j < sizeOfSample; j++)
 		{
 			#ifdef opdebug
-				lprintf("%x", thisSample[j]);
+				lprintf("%x ", thisSample[j]);
 			#endif
 			uint8_t data[3];
 			data[0] = commPromEnd >> 8;
 			data[1] = commPromEnd;
-			data[3] = thisSample;
+			data[2] = thisSample[j];
 			#ifdef detacheeprom
-			i2cMasterSendNI(COMPROM, 3, &data);
+			i2cMasterSendNI(COMPROM, 3, data);
 			#endif
 			commPromEnd++;
 		}
@@ -207,7 +254,38 @@ void flushSatQueue(void)
 
 	uint16_t commPromEnd = eeprom_read_word(&EEcommPromEnd);
 	uint16_t commPromStart = eeprom_read_word(&EEcommPromStart);
-	//Send A message to comm module(CommEEPROMstart, CommEEPROMEnd)
+
+    #ifdef opdebug
+    lprintf_P(PSTR("Sending Long Report\n"));
+    #endif
+
+    uint8_t cps1 = commPromStart >> 8;
+    uint8_t cps2 = commPromStart;
+    uint8_t cpe1 = commPromEnd >> 8;
+    uint8_t cpe2 = commPromEnd;
+
+	i2cSendStart();
+    i2cWaitForComplete();
+    i2cSendByte(0x10);
+    i2cWaitForComplete();
+    i2cSendByte(0x01);
+    i2cWaitForComplete();
+
+    i2cSendByte(cps1);
+    i2cWaitForComplete();
+    i2cSendByte(cps2);
+    i2cWaitForComplete();
+    i2cSendByte(cpe1);
+    i2cWaitForComplete();
+    i2cSendByte(cpe2);
+    i2cWaitForComplete();
+
+    i2cSendStop();
+
+    #ifdef opdebug
+    lprintf_P(PSTR("Done w/Long Report\n"));
+    #endif
+
 	if(COMMPROMSIZE - commPromEnd < 1024)
 		commPromStart = commPromEnd = 0;
 	else

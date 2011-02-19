@@ -2,12 +2,12 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="WSB Flight Computer" />
+		<Option title="WSBFlightComputer" />
 		<Option pch_mode="2" />
 		<Option compiler="avrgcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/WSB Flight Computer.elf" prefix_auto="1" extension_auto="0" />
+				<Option output="bin/Debug/WSBFlightComputer.elf" prefix_auto="1" extension_auto="0" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="avrgcc" />
@@ -16,7 +16,7 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/WSB Flight Computer.elf" prefix_auto="1" extension_auto="0" />
+				<Option output="bin/Release/WSBFlightComputer.elf" prefix_auto="1" extension_auto="0" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="avrgcc" />
@@ -26,23 +26,77 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-Wall" />
 			<Add option="-mmcu=atmega324p" />
+			<Add option="-Os" />
+			<Add option="-Wall" />
+			<Add option="-g" />
+			<Add option="-std=gnu99" />
+			<Add option="-funsigned-char" />
+			<Add option="-funsigned-bitfields" />
+			<Add option="-fpack-struct" />
+			<Add option="-fshort-enums" />
+			<Add option="-Wstrict-prototypes" />
 			<Add option="-DF_CPU=12000000UL" />
 		</Compiler>
 		<Linker>
 			<Add option="-mmcu=atmega324p" />
 			<Add option="-Wl,-Map=$(TARGET_OUTPUT_FILE).map,--cref" />
+			<Add option="-Wl,-u,vfprintf" />
+			<Add option="-lprintf_flt" />
+			<Add option="-Wl,-u,vfscanf" />
+			<Add option="-lscanf_flt" />
+			<Add option="-lm" />
 		</Linker>
 		<ExtraCommands>
 			<Add after="avr-size $(TARGET_OUTPUT_FILE)" />
 			<Add after="avr-objcopy -O ihex -R .eeprom -R .eesafe $(TARGET_OUTPUT_FILE) $(TARGET_OUTPUT_FILE).hex" />
 			<Add after="avr-objcopy --no-change-warnings -j .eeprom --change-section-lma .eeprom=0 -O ihex $(TARGET_OUTPUT_FILE) $(TARGET_OUTPUT_FILE).eep.hex" />
 			<Add after="avr-objdump -h -S $(TARGET_OUTPUT_FILE) &gt; $(TARGET_OUTPUT_FILE).lss" />
+			<Mode after="always" />
 		</ExtraCommands>
+		<Unit filename="comm/outputParse.c">
+			<Option compilerVar="CC" />
+			<Option weight="54" />
+		</Unit>
+		<Unit filename="comm/outputParse.h" />
+		<Unit filename="dataStructures.h" />
+		<Unit filename="eepromVars.h" />
+		<Unit filename="lib/bmp085.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lib/bmp085.h" />
+		<Unit filename="lib/ds3231.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lib/ds3231.h" />
+		<Unit filename="lib/i2c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lib/i2c.h" />
+		<Unit filename="lib/tmp100.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lib/tmp100.h" />
+		<Unit filename="logging/openlog.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="logging/openlog.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="parsing/epoch.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="parsing/epoch.h" />
+		<Unit filename="parsing/gps.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="parsing/gps.h" />
+		<Unit filename="progmemVars.h" />
+		<Unit filename="queue.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="queue.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

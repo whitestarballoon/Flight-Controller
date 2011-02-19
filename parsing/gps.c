@@ -53,10 +53,6 @@ void getGPS(struct gpsData *outputData)
 			lineBuff[i] = tempChar;
 			i++;
 		}
-		if(tempChar==0xff)
-		{
-		    lprintf("ERR!\n");
-		}
 		lineBuff[i] = '\0';
 		errorTracker++;
 	} while((strncmp("$GPRMC", lineBuff, 6) != 0) && errorTracker < 100);
@@ -68,6 +64,7 @@ void getGPS(struct gpsData *outputData)
 	//Set the output status to "Loco".
 	if(errorTracker >= 100)
 	{
+	    lprintf_P(PSTR("ERR\n"));
 		outputData->status  = 3;
 		return;
 	}
@@ -149,6 +146,7 @@ void getGPS(struct gpsData *outputData)
 			lineBuff[i] = tempChar;
 			i++;
 		}
+		errorTracker++;
 		lineBuff[i] = '\0';
 	} while((strncmp("$GPGSA", lineBuff, 6) != 0) && errorTracker < 100);
 	// End GPGSA Acquisition Section
@@ -204,12 +202,13 @@ void getGPS(struct gpsData *outputData)
 	{
 		i=0;
 		//i < 99 to leave room for the null terminator
-		while(((tempChar = (char)uart_getchar()) != '\n') && i < 99)
+		while(((tempChar = (char)uart_getchar()) != '\n') && (i < 99) && tempChar!= 0xff)
 		{
 			lineBuff[i] = tempChar;
 			i++;
 		}
 		lineBuff[i] = '\0';
+		errorTracker++;
 	} while((strncmp("$GPGGA", lineBuff, 6) != 0) && errorTracker < 100);
 	// End GPGGA Acquisition Section
 
@@ -275,7 +274,7 @@ void debugPrintRawStrings(void)
 	{
 		i=0;
 		//i < 99 to leave room for the null terminator
-		while(((tempChar = (char)uart_getchar()) != '\n') && i < 99)
+		while(((tempChar = (char)uart_getchar()) != '\n') && (i < 99) && tempChar!= 0xff)
 		{
 			lineBuff[i] = tempChar;
 			i++;
