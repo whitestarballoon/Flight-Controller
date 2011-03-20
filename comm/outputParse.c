@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
 #include <util/delay.h>
 
 #include <avr/pgmspace.h>
@@ -60,13 +61,6 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 
 	}
 	//Bitmask reversal words
-
-	/*lprintf("%lx ", bitmask[0]);
-	lprintf("%lx ", bitmask[1]);
-	lprintf("%lx\n", bitmask[2]);
-    lprintf("%lx ", reversedBitmask[0]);
-	lprintf("%lx ", reversedBitmask[1]);
-	lprintf("%lx\n", reversedBitmask[2]);*/
 
 	char sampleHolder[SAMPLESTRINGSIZEINCHARS+5];
 
@@ -216,7 +210,9 @@ void loadBatch(void)
 	{
 		uint8_t thisSample[MAXTXSAMPLESIZE];
 		uint8_t sizeOfSample;
+		memset(thisSample, 0x00, MAXTXSAMPLESIZE);
 		sizeOfSample = getTxSample(thisSample, currentBitmask, i, batchNumber);
+
 		#ifdef opdebug
 			lprintf("A Sample: ");
 		#endif
@@ -226,17 +222,21 @@ void loadBatch(void)
 				lprintf("%x ", thisSample[j]);
 			#endif
 			uint8_t data[3];
+			uint8_t error;
 			data[0] = commPromEnd >> 8;
 			data[1] = commPromEnd;
 			data[2] = thisSample[j];
 			#ifdef detacheeprom
-			i2cMasterSendNI(COMPROM, 3, data);
+			while((error = i2cMasterSendNI(COMPROM, 3, data)) != I2C_OK);
 			#endif
+            eeprom_write_word(&EEbatchSampleStart, ++batchSampleStart);
+            wdt_reset();
 			commPromEnd++;
 		}
 		#ifdef opdebug
 			lprintf("\n");
 		#endif
+
 	}
 
 	batchNumber++;
@@ -264,6 +264,10 @@ void flushSatQueue(void)
     uint8_t cpe1 = commPromEnd >> 8;
     uint8_t cpe2 = commPromEnd;
 
+    #ifdef opdebug
+        lprintf_P(PSTR("CPS: %x %x CPE: %x %x\n"), cps1, cps2, cpe1, cpe2);
+    #endif
+
 	i2cSendStart();
     i2cWaitForComplete();
     i2cSendByte(0x10);
@@ -286,7 +290,7 @@ void flushSatQueue(void)
     lprintf_P(PSTR("Done w/Long Report\n"));
     #endif
 
-	if(COMMPROMSIZE - commPromEnd < 1024)
+	if((COMMPROMSIZE - commPromEnd) < 1024)
 		commPromStart = commPromEnd = 0;
 	else
 		commPromStart = commPromEnd;

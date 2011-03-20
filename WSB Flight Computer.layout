@@ -1,13 +1,40 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Debug" />
-	<File name="comm/outputParse.c" open="1" top="0" tabpos="2">
-		<Cursor position="790" topLine="26" />
+	<File name="comm/outputParse.c" open="1" top="0" tabpos="3">
+		<Cursor position="6847" topLine="0" />
 	</File>
-	<File name="logging/openlog.c" open="1" top="1" tabpos="3">
-		<Cursor position="1110" topLine="21" />
+	<File name="dataStructures.h" open="0" top="0" tabpos="0">
+		<Cursor position="814" topLine="12" />
 	</File>
-	<File name="main.c" open="1" top="0" tabpos="1">
-		<Cursor position="4963" topLine="157" />
+	<File name="eepromVars.h" open="0" top="0" tabpos="0">
+		<Cursor position="1937" topLine="33" />
+	</File>
+	<File name="lib/bmp085.c" open="0" top="0" tabpos="0">
+		<Cursor position="1753" topLine="28" />
+	</File>
+	<File name="lib/i2c.c" open="1" top="0" tabpos="4">
+		<Cursor position="7648" topLine="293" />
+	</File>
+	<File name="lib/i2c.h" open="0" top="0" tabpos="0">
+		<Cursor position="3645" topLine="82" />
+	</File>
+	<File name="logging/openlog.c" open="1" top="0" tabpos="5">
+		<Cursor position="3346" topLine="107" />
+	</File>
+	<File name="main.c" open="1" top="1" tabpos="1">
+		<Cursor position="44696" topLine="1490" />
+	</File>
+	<File name="parsing/epoch.c" open="1" top="0" tabpos="2">
+		<Cursor position="1326" topLine="43" />
+	</File>
+	<File name="parsing/gps.c" open="1" top="0" tabpos="6">
+		<Cursor position="4066" topLine="333" />
+	</File>
+	<File name="progmemVars.h" open="0" top="0" tabpos="0">
+		<Cursor position="519" topLine="0" />
+	</File>
+	<File name="queue.h" open="0" top="0" tabpos="0">
+		<Cursor position="656" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

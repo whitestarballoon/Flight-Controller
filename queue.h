@@ -21,7 +21,7 @@
 
 #include "dataStructures.h"
 
-#define QUEUEDEPTH 12
+#define QUEUEDEPTH 15
 
 extern int lprintf(char *, ...);
 void scheduleQueueAdd(scheduledFunction thisFunction, uint32_t epochTime);

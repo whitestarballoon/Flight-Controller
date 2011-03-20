@@ -42,8 +42,8 @@ eeprom_write_word(&EEmaxAllowableTXInterval, 3600);
 eeprom_write_byte(&EEbatteryHeaterSetpoint, -20);
 
 eeprom_write_word(&EEdataCollectionInterval, 60);
-eeprom_write_word(&EEdataTransmitInterval, 60);
-eeprom_write_word(&EEshortDataTransmitInterval, 900);
+eeprom_write_word(&EEdataTransmitInterval, 900);
+eeprom_write_word(&EEshortDataTransmitInterval, 300);
 
 eeprom_write_dword(&EEepochOfLastBatchTransmit, 0);
 
@@ -60,7 +60,7 @@ eeprom_write_byte(&EEcommModuleResetCount, 0);
 eeprom_write_byte(&EEflightPhase, 0x10);
 
 eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
-eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b10100000000000000000000000000000);
+eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
 eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
 
 eeprom_write_word(&EEcurrentTelemetryVersion, 0);

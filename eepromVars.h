@@ -70,6 +70,9 @@ uint16_t EEMEM EEcurrentTelemetryVersion; //Var 0x07
 
 uint8_t EEMEM EEEpochLock = 0;
 
+uint16_t EEMEM EEhfTimeToTx;
+uint8_t EEMEM EEhfLenngthToTx;
+
 //THIS IS ALSO DEFINED IN MAIN, REMEMBER TO CHANGE THIS DUMMY
 #define VSPEEDSAMPLESDESIRED 20
 

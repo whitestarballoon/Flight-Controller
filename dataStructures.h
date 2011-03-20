@@ -22,7 +22,7 @@
 
 #define MAXTXSAMPLESIZE 150
 
-#define COMMPROMSIZE 32768
+#define COMMPROMSIZE 32767
 
 typedef void (*scheduledFunction)(uint32_t);
 
@@ -32,7 +32,7 @@ struct dataSample
 	uint16_t flightComputerTemperature;
 	uint32_t barometricPressure;
 	//struct gpsData sampleGPS;
-	
+
 } dataSample;
 
 struct gpsData
@@ -49,7 +49,7 @@ struct gpsData
 	uint8_t seconds;
 	uint16_t altitude;
 	uint8_t numberOfSats;
-	
+
 } gpsData;
 
 

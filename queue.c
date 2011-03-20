@@ -49,13 +49,13 @@ void scheduleQueueAdd(scheduledFunction thisFunction, uint32_t epochTime)
     } else {
 		lprintf("Q BUF FULL\n");
 	}
-	
+
 }
 
 int8_t scheduleQueueGetTop(scheduledFunction *returnFunction, uint32_t *returnTime)
 {
         if (queueEnd != queueStart) {
-				
+
                 scheduledFunction tempF = scheduledFunctionArray[queueStart];
                 uint32_t tempT = scheduledFunctionTimes[queueStart];
                 //This Algorithm too.
@@ -68,3 +68,27 @@ int8_t scheduleQueueGetTop(scheduledFunction *returnFunction, uint32_t *returnTi
         return 1;
 }
 
+int8_t scheduleQueueAlterTime(scheduledFunction thisFunction, uint32_t newTime)
+{
+    for(int i = 0; i < QUEUEDEPTH; i++)
+	{
+		uint32_t scheduleTime;
+		scheduledFunction storageFunction;
+		volatile int8_t error;
+
+		error = scheduleQueueGetTop(&storageFunction, &scheduleTime);
+		//lprintf("PTR: %p time: %lud now: %lud\n", ptrToFunction, scheduleTime, rightNow);
+
+		if(error == 0 && storageFunction == thisFunction)
+		{
+			/*#ifdef FCPUDEBUG
+				lprintf_P(PSTR("Running some function\n"));
+			#endif*/
+			scheduleQueueAdd(storageFunction, newTime);
+		}
+		} else {
+			scheduleQueueAdd(storageFunction, scheduleTime);
+		}
+
+	}
+}

@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include <avr/pgmspace.h>
+#include <avr/wdt.h>
 
 
 #include "gps.h"
@@ -59,7 +60,7 @@ void getGPS(struct gpsData *outputData)
 	// End GPRMC Acquisition Section
 
 	//lprintf("et: %d\n", errorTracker);
-
+    wdt_reset();
 	//If something is wrong, return before we try to parse the data.
 	//Set the output status to "Loco".
 	if(errorTracker >= 100)
@@ -150,7 +151,7 @@ void getGPS(struct gpsData *outputData)
 		lineBuff[i] = '\0';
 	} while((strncmp("$GPGSA", lineBuff, 6) != 0) && errorTracker < 100);
 	// End GPGSA Acquisition Section
-
+    wdt_reset();
 	if(errorTracker >= 100)
 	{
 		outputData->status  = 3;
@@ -211,7 +212,7 @@ void getGPS(struct gpsData *outputData)
 		errorTracker++;
 	} while((strncmp("$GPGGA", lineBuff, 6) != 0) && errorTracker < 100);
 	// End GPGGA Acquisition Section
-
+    wdt_reset();
 	if(errorTracker >= 100)
 	{
 		outputData->status  = 3;

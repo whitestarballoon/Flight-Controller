@@ -24,6 +24,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <string.h>
+#include <avr/wdt.h>
 
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
@@ -67,6 +68,10 @@
 #define TAKEOFFPINPORT PORTD
 #define TAKEOFFPIN 5
 
+#define POWERPORT PORTB
+#define I2C9PT  0
+#define I2C10PT 1
+
 #define TMP100FC 0b10011110
 #define TMP101BH 0b10010010
 #define TMP100EXT 0b10010110
@@ -75,7 +80,7 @@
 #define INTSENSOR 0x14
 
 #define GSPDEBUG
-//#define FCPUDEBUG
+#define FCPUDEBUG
 //#define OSHITDISABLE
 
 #define CRITCOMFAIL 25
@@ -114,6 +119,10 @@ void updateCommHFTelemetry(uint32_t);
 void rapidHFXmit(uint32_t);
 void ballastStaticTickle(uint32_t);
 void flightPhaseLogic(uint32_t);
+void resetWatchdog(uint32_t);
+void turnHfOn(uint32_t);
+void turnHfOff(uint32_t);
+void updateSpeedDial(uint16_t speedDial);
 
 //Vspeed Calculation Variables
 int16_t vSpeedAvg;
@@ -127,6 +136,7 @@ uint8_t enableReports = 1;
 uint8_t reportCounterL=0;
 uint8_t reportCounterH=0;
 uint16_t statusCode = 0x00;
+uint8_t hfSema = 0;
 
 //HOLY CRAP YOU ARE STUPID PUT THESE SOMEWHERE THAT MAKES SENSE SO YOU DON'T HAVE TO EXTERN THEM
 //IN YOUR FREAKING MAIN ROUTINE
@@ -158,8 +168,14 @@ extern uint8_t EEMEM EEepochStartMinutes;
 extern uint8_t EEMEM EEepochStartHours;
 extern uint8_t EEMEM EEepochStartDays;
 extern uint8_t EEMEM EEEpochLock;
+extern uint16_t EEMEM EEhfTimeToTx;
+extern uint8_t EEMEM EEhfLenngthToTx;
 
 static FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
+//Watchdog Vars
+uint8_t mcusr_mirror __attribute__ ((section (".noinit")));
+void get_mcusr(void) __attribute__((naked)) __attribute__((section(".init3")));
+
 //======================
 
 
@@ -168,6 +184,8 @@ int main (void)
 {
 	uint8_t seconds,  minutes, hours, days;
 	uint8_t error;
+
+    //wdt_disable();
 
 	ioinit(); //Setup IO pins and defaults
 	i2cSetTheDamnTWBRMyself(10);
@@ -180,16 +198,18 @@ int main (void)
 	_delay_ms(500);
 
 	lprintf("WSB CPU Alive\n");
-
+    wdt_enable(WDTO_8S);
 	error = getTime(&seconds, &minutes, &hours, &days);
-	lprintf("E: %d\n", error);
-	lprintf("S: %d M: %d H: %d D: %d\n", seconds, minutes, hours, days);
+	//lprintf("S: %d M: %d H: %d D: %d\n", seconds, minutes, hours, days);
 
 	if(eeprom_read_byte(&EEEpochLock) == 0)
 	{
 		#ifdef FCPUDEBUG
 			lprintf_P(PSTR("Setting Epoch Start\n"));
 		#endif
+		eeprom_write_word(&EEcurrentBatchNumber, 0);
+        eeprom_write_word(&EEbatchSampleStart, 0);
+        eeprom_write_word(&EEbatchSampleEnd, 0);
 		writeEpochStart(seconds, minutes, hours, days);
 	}
 
@@ -215,14 +235,14 @@ int main (void)
 	//defaultEEPROM();
 	if(eeprom_read_byte(&EEEpochLock) == 0)
 	{
-		defaultEEPROM();
+		//defaultEEPROM();
         initOpenLogTest();
 	} else {
 		initOpenLogFlight();
 	}
 
 
-	lprintf("Still Still Alive\n");
+	lprintf("SSAlive\n");
 
 	//lprintf("psamp\n");
 	//Test Routine for data Storage and Retreival
@@ -257,16 +277,30 @@ int main (void)
 
 	}*/
 
+    if((mcusr_mirror & 0x08) == 0x08)
+    {
+        //lprintf("WDTReset\n");
+    }
+
+
+
+    //lprintf("WDTCR: %x\n", WDTCSR);
+
+    //REMOVE BEFORE FLIGHT:
+    //eeprom_write_byte(&EEflightPhase, 16);
+
 	uint32_t rnow = now();
+	scheduleQueueAdd(&resetWatchdog, rnow);
 	scheduleQueueAdd(&processMonitor, rnow);
 	scheduleQueueAdd(&calculateVspeed, rnow);
 	scheduleQueueAdd(&collectData, rnow);
 	scheduleQueueAdd(&transmitSamples, rnow);
-	//scheduleQueueAdd(&transmitShortReport, rnow);
+	scheduleQueueAdd(&transmitShortReport, rnow+20);  //Special case to give the comm controller a chance
 	scheduleQueueAdd(&updateCommHFTelemetry, rnow);
 	scheduleQueueAdd(&ballastStaticTickle, rnow);
 	scheduleQueueAdd(&autoBallast, rnow);
 	scheduleQueueAdd(&flightPhaseLogic, rnow);
+
 	while(1)
 	{
 		uint32_t scheduleTime;
@@ -312,6 +346,14 @@ uint8_t rapidHFEnable=0;
 void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 {
     uint8_t temp;
+
+    lprintf_P(PSTR("FCPU RX I2C\n"));
+    for(int i=0; i < receiveDataLength; i++)
+    {
+        lprintf("%x ", recieveData[i]);
+    }
+    lprintf("\n");
+
 	switch(recieveData[0])
 	{
 		case 0x00:
@@ -381,6 +423,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			{
 				uint16_t holder = ((uint16_t)recieveData[1]<<8) + recieveData[2];
 				eeprom_write_word(&EEcurrentTelemetryVersion, holder);
+				updateSpeedDial(holder);
 			}
 			break;
 		case 0x09:
@@ -409,7 +452,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 				#ifdef GSPDEBUG
 					if(error != 0)
 					{
-						lprintf_P(PSTR("Error Setting thermometer\n"));
+						//lprintf_P(PSTR("Error Setting thermometer\n"));
 					}
 				#endif
 				//Should probably set a status code here  BEFORE FLIGHT
@@ -447,7 +490,8 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			//if(receiveDataLength == 5)
 			{
 				//It Looks Like You're trying to Schedule a cutdown!
-				uint32_t time = ((uint32_t)recieveData[0] << 24) + ((uint32_t)recieveData[1] << 16) + ((uint32_t)recieveData[2] << 8) + recieveData[3];
+				//uint32_t time = ((uint32_t)recieveData[0] << 24) + ((uint32_t)recieveData[1] << 16) + ((uint32_t)recieveData[2] << 8) + recieveData[3];
+				uint32_t time = ((uint32_t)recieveData[0]<<16) + ((uint32_t)recieveData[1] << 8);
 				scheduleQueueAdd(&timedCutdown, time);
 			}
 			break;
@@ -455,17 +499,23 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			//if(receiveDataLength == 3)
 			{
 				//Send Ballast Controller the ballast command
+				uint8_t retVal;
+                uint8_t dataToSend[3] = {20,recieveData[0],recieveData[1]};
+                uint8_t errorTolerance = 0;
+                while( ((retVal = i2cMasterSendNI(18, 3, dataToSend)) != I2C_OK) && errorTolerance < CRITCOMFAIL)
+                {
+                    _delay_ms(500);
+                    errorTolerance++;
+                }
 			}
 			break;
 		case 0x12:
 			//set Disarm Auto Ballast
-			lprintf_P(PSTR("bdis\n"));
+			//lprintf_P(PSTR("bdis\n"));
 			temp = eeprom_read_byte(&EEautoBallastDisable);
-            lprintf("Vb: %d\n", temp);
-			lprintf_P(PSTR("bptr %p\n"), &EEautoBallastDisable);
+			//lprintf_P(PSTR("bptr %p\n"), &EEautoBallastDisable);
             eeprom_write_byte(&EEautoBallastDisable, 1);
             temp = eeprom_read_byte(&EEautoBallastDisable);
-            lprintf("V: %d\n", temp);
 			break;
 		case 0x13:
 			//if(receiveDataLength == 1)
@@ -519,14 +569,53 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
                 eeprom_write_word(&EEshortDataTransmitInterval, holder);
             }
         break;
+        case 0x1C:
+            {
+                int16_t holder = ((uint16_t)recieveData[1]<<8) + recieveData[2];
+                eeprom_write_word(&EEhfTimeToTx, holder);
+            }
+        break;
+        case 0x1D:
+            {
+                eeprom_write_byte(&EEhfLenngthToTx, recieveData[0]);
+            }
+        break;
+        case 0xf0:
+        //Cam Start
+        break;
+        case 0xef:
+        //Cam Stop
+        break;
+        case 0xf1:
+            transmitSamples(0xFFFFFFFF);
+            break;
+        case 0xf2:
+            transmitShortReport(0xFFFFFFFF);
+            break;
+        case 0xF3:
+            dumpInternalState();
+            break;
+        case 0xf4:
+            while(1);
+            break;
+        case 0xF5:
+            POWERPORT &= ~_BV(I2C9PT);
+            hfSema = 0;
+            lprintf("HFOFF\n");
+            break;
+        case 0xF6:
+            POWERPORT |= _BV(I2C9PT);
+            hfSema = 2;
+            lprintf("HFON\n");
+            break;
 		case 0xF7:
 			eeprom_write_byte(&EEEpochLock, recieveData[1]);
 			break;
 		case 0xF8:
-			dumpGPS();
+			//dumpGPS();
 			break;
 		case 0xF9:
-			debugBallast();
+			//debugBallast();
 			break;
 		case 0xFA:
 			debugPrintRawStrings();
@@ -539,10 +628,10 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			collectData(0xFFFFFFFF);
 			break;
 		case 0xFD:
-			dumpTemps();
+			//dumpTemps();
 			break;
 		case 0xFE:
-			bmpTest();
+			//bmpTest();
 			break;
 		case 0xFF:
 			dumpVarsToGSP();
@@ -550,81 +639,162 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 	}
 }
 
-void debugBallast(void)
+void dumpInternalState(void)
 {
-	lprintf_P(PSTR("testing ballast\n"));
 
-	uint8_t data = 19;
-	uint8_t retVal;
-	while( (retVal = i2cMasterSendNI(BALLASTMODULE, 1, &data)) != I2C_OK)
-	{
-		_delay_ms(500);
-	}
-	_delay_ms(1000);
-	lprintf(PSTR("turned ballast on.\n"));
-	_delay_ms(10000);
-	lprintf("Done waiting\n");
-	data = 18;
-	while( (retVal = i2cMasterSendNI(BALLASTMODULE, 1, &data)) != I2C_OK)
-	{
-		_delay_ms(500);
-	}
-	lprintf("out\n");
-}
+    //Raw Batt Voltage
+    //get raw pack voltage
+	//AD7998 Interfacing
+	i2cSendStart();
+	i2cWaitForComplete();
+	i2cSendByte(AD7992);
+	i2cWaitForComplete();
+	i2cSendByte(0x10);
+	i2cWaitForComplete();
+	i2cSendStop();
+	_delay_us(5);
 
-void bmpTest(void)
-{
-	long myPressure;
-	long myTemp;
-	bmp085Convert(&myTemp, &myPressure);
+	i2cSendStart();
+	i2cWaitForComplete();
+	i2cSendByte(AD7992+1);
+	i2cWaitForComplete();
+	i2cReceiveByte(1);
+	i2cWaitForComplete();
+	uint16_t batteryValue = (uint16_t)i2cGetReceivedByte() << 8;
+	i2cWaitForComplete();
+	i2cReceiveByte(0);
+	i2cWaitForComplete();
+	batteryValue += i2cGetReceivedByte();
+	i2cWaitForComplete();
+	i2cSendStop();
+	batteryValue &= 0x0FFF;
+	//This is not such a magic value.  12 bits AD = 4096
+	//Divider network = 4.07 kohms and 20 khoms
+	//(3.3 volts / 4096) * (24.07/4.07) = 0.0047647
+	//Multiply by 10 to get bigger value.
+	float myVoltage = ((float)batteryValue*0.0047647);
+	lprintf("Batt Volts: %f\n", myVoltage);
 
-	//lprintf_P(PSTR("BMP085 Temp: %ld Pressure %ld\n"), myTemp, myPressure);
-	lprintf_P(PSTR("BMP T: %ld\n"), myTemp);
-	lprintf_P(PSTR("BMP P: %ld\n"), myPressure);
-	lprintf("Test\n");
-}
-
-void dumpTemps(void)
-{
-	//get FC temp
-	uint16_t rawFCTemp;
-	int8_t internalTemp;
-	rawFCTemp = tmp100rawTemp(TMP100FC)>>4;
-	int16_t fctinm = get12bit2scomp(rawFCTemp);
-	internalTemp = (int8_t)(fctinm/16);
-	//Convert to 8 bit
-
-	//get ext temp
-	uint16_t rawExtTemp = tmp100rawTemp(TMP100EXT)>>4;
-	int16_t externalTemperature = get12bit2scomp(rawExtTemp);
-
-	//get battetry temp
-	uint16_t rawBattTemp = tmp100rawTemp(TMP101BH)>>4;
+    //Batt Temp
+    uint16_t rawBattTemp = tmp100rawTemp(TMP101BH)>>4;
 	int16_t btinm = get12bit2scomp(rawBattTemp);
 	int8_t batteryTemperature = (int8_t)(btinm/16);
-	//conver to 8 bit
+	lprintf("Batt Temp: %f\n", (float)btinm/16.);
+    //
 
-	if(rawFCTemp != 0xEFF)
-	{
-		lprintf_P(PSTR("FC: Raw: %x Calc: %d\n"), rawFCTemp, internalTemp);
-	} else {
-		lprintf_P(PSTR("Error Reading FC Temp\n"));
-	}
-
-	if(rawExtTemp != 0xEFF)
-	{
-		lprintf_P(PSTR("Ext: Raw: %x Calc: %d\n"), rawExtTemp, externalTemperature);
-	} else {
-		lprintf_P(PSTR("Error Reading External Temp\n"));
-	}
-
-	if(rawBattTemp != 0xEFF)
-	{
-		lprintf_P(PSTR("Batt: Raw: %x Calc: %d\n"), rawBattTemp, batteryTemperature);
-	} else {
-		lprintf_P(PSTR("Error Reading Battery Temp\n"));
-	}
 }
+
+void updateSpeedDial(uint16_t speedDial)
+{
+    #ifdef FCPUDEBUG
+        lprintf_P(PSTR("Change SpdDial\n"));
+    #endif
+    switch(speedDial)
+    {
+        case 0x00:
+        {
+            //Default 1 minute collect, 15 minute batch
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01000000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 60);
+            eeprom_write_word(&EEdataTransmitInterval, 900);
+        }
+        break;
+        case 0x01:
+        {
+            //10 minute collect, 20 minute transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 600);
+            eeprom_write_word(&EEdataTransmitInterval, 1200);
+        }
+        break;
+        case 0x02:
+        {
+            //5 minute collect, 15 minute transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 300);
+            eeprom_write_word(&EEdataTransmitInterval, 900);
+        }
+        break;
+        case 0x03:
+        {
+            //15 minute collect, 15 minute transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 900);
+            eeprom_write_word(&EEdataTransmitInterval, 900);
+        }
+        break;
+        case 0x04:
+        {
+            //15 minute collect, 30 minute transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 900);
+            eeprom_write_word(&EEdataTransmitInterval, 1800);
+        }
+        break;
+        case 0x05:
+        {
+            //15 minute collect, 1 hour transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 900);
+            eeprom_write_word(&EEdataTransmitInterval, 3600);
+        }
+        break;
+        case 0x06:
+        {
+            //1 minute collect, 1 minute transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 60);
+            eeprom_write_word(&EEdataTransmitInterval, 60);
+        }
+        break;
+        case 0x07:
+        {
+            //1 minute collect, 5 minute transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010100011010101010100001011001);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 60);
+            eeprom_write_word(&EEdataTransmitInterval, 300);
+        }
+        break;
+        case 0x08:
+        {
+            //Need Data Now!
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b00000000000010101010000100001000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b00000000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 60);
+            eeprom_write_word(&EEdataTransmitInterval, 60);
+        }
+        break;
+        case 0x09:
+        {
+            //Need Science Data now!
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010101011010101010000101011111);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 60);
+            eeprom_write_word(&EEdataTransmitInterval, 60);
+        }
+        break;
+
+    }
+}
+
 
 void dumpVarsToGSP(void)
 {
@@ -635,15 +805,15 @@ void dumpVarsToGSP(void)
 	//lprintf_P(PSTR("epochStartDays: %d\n"), eeprom_read_byte(&EEepochStartDays));
 	_delay_ms(500);
 
-	//lprintf_P(PSTR("ballastTrgtAlt: %d\n"), eeprom_read_word(&EEballastTargetAltitude));
-	//lprintf_P(PSTR("ballastTrgt +Vspd: %d\n"), eeprom_read_word(&EEballastTargetPositiveVSpeed));
-	//lprintf_P(PSTR("ballastTrgt -Vspd: %d\n"), eeprom_read_word(&EEballastTargetNegativeVSpeed));
+	lprintf_P(PSTR("ballastTrgtAlt: %ud\n"), eeprom_read_word(&EEballastTargetAltitude));
+	lprintf_P(PSTR("ballastTrgt +Vspd: %d\n"), eeprom_read_word(&EEballastTargetPositiveVSpeed));
+	lprintf_P(PSTR("ballastTrgt -Vspd: %d\n"), eeprom_read_word(&EEballastTargetNegativeVSpeed));
 
-	//lprintf_P(PSTR("maydayAlt: %d\n"), eeprom_read_word(&EEmaydayAltitude));
-	//lprintf_P(PSTR("maydayVSpd: %d\n"), eeprom_read_word(&EEmaydayVSpeed));
+	lprintf_P(PSTR("maydayAlt: %ud\n"), eeprom_read_word(&EEmaydayAltitude));
+	lprintf_P(PSTR("maydayVSpd: %d\n"), eeprom_read_word(&EEmaydayVSpeed));
 	_delay_ms(500);
 
-	lprintf_P(PSTR("ballastSftyAlt: %d\n"), eeprom_read_word(&EEballastSafetyAltThresh));
+	lprintf_P(PSTR("ballastSftyAlt: %ud\n"), eeprom_read_word(&EEballastSafetyAltThresh));
 	uint8_t variable = (volatile)eeprom_read_byte(&EEautoBallastDisable);
 	lprintf_P(PSTR("autoBallast dsbled?: %d\n"), variable);
 
@@ -653,27 +823,27 @@ void dumpVarsToGSP(void)
 	//lprintf_P(PSTR("sunriseAntcpation: %ld\n"), eeprom_read_dword(&EEsunriseAnticipation));
 	_delay_ms(500);
 
-	lprintf_P(PSTR("maxAllowedTXInterval: %d\n"), eeprom_read_word(&EEmaxAllowableTXInterval));
+	lprintf_P(PSTR("maxAllowedTXInterval: %ud\n"), eeprom_read_word(&EEmaxAllowableTXInterval));
 
 	lprintf_P(PSTR("batteryHeaterSet: %d\n"), eeprom_read_byte(&EEbatteryHeaterSetpoint));
 
-	lprintf_P(PSTR("dataSampleInterval: %d\n"), eeprom_read_word(&EEdataCollectionInterval));
-	lprintf_P(PSTR("batchTXInterval: %d\n"), eeprom_read_word(&EEdataTransmitInterval));
-    lprintf_P(PSTR("shortTXInterval: %d\n"), eeprom_read_word(&EEshortDataTransmitInterval));
+	lprintf_P(PSTR("dataSampleInterval: %ud\n"), eeprom_read_word(&EEdataCollectionInterval));
+	lprintf_P(PSTR("batchTXInterval: %ud\n"), eeprom_read_word(&EEdataTransmitInterval));
+    lprintf_P(PSTR("shortTXInterval: %ud\n"), eeprom_read_word(&EEshortDataTransmitInterval));
 	_delay_ms(500);
 
-	lprintf_P(PSTR("HFdataXmitInterval: %d\n"), eeprom_read_word(&EEhfDataTransmitInterval));
-	lprintf_P(PSTR("HFrapidXmitInterval: %d\n"), eeprom_read_byte(&EEhfRapidTransmit));
+	lprintf_P(PSTR("HFdataXmitInterval: %ud\n"), eeprom_read_word(&EEhfDataTransmitInterval));
+	lprintf_P(PSTR("HFrapidXmitInterval: %ud\n"), eeprom_read_byte(&EEhfRapidTransmit));
 
 	lprintf_P(PSTR("epochOfLastBatchTX: %ld\n"), eeprom_read_dword(&EEepochOfLastBatchTransmit));
 
-	lprintf_P(PSTR("curBatchNumber: %d\n"), eeprom_read_word(&EEcurrentBatchNumber));
-	lprintf_P(PSTR("batchSampleStart: %d\n"), eeprom_read_word(&EEbatchSampleStart));
-	lprintf_P(PSTR("batchSampleEnd: %d\n"), eeprom_read_word(&EEbatchSampleEnd));
+	lprintf_P(PSTR("curBatchNumber: %ud\n"), eeprom_read_word(&EEcurrentBatchNumber));
+	lprintf_P(PSTR("batchSampleStart: %ud\n"), eeprom_read_word(&EEbatchSampleStart));
+	lprintf_P(PSTR("batchSampleEnd: %ud\n"), eeprom_read_word(&EEbatchSampleEnd));
 	_delay_ms(500);
 
-	lprintf_P(PSTR("commEEPROMStart: %d\n"), eeprom_read_word(&EEcommPromStart));
-	lprintf_P(PSTR("commEEPROMEnd: %d\n"), eeprom_read_word(&EEcommPromEnd));
+	//lprintf_P(PSTR("commEEPROMStart: %d\n"), eeprom_read_word(&EEcommPromStart));
+	//lprintf_P(PSTR("commEEPROMEnd: %d\n"), eeprom_read_word(&EEcommPromEnd));
 
 	lprintf_P(PSTR("flightComputerResetCount: %d\n"), eeprom_read_byte(&EEflightComputerResetCount));
 	lprintf_P(PSTR("commModuleResetCount: %d\n"), eeprom_read_byte(&EEcommModuleResetCount));
@@ -694,28 +864,27 @@ void dumpVarsToGSP(void)
 }
 
 struct gpsData currentPositionData;
-
-void dumpGPS(void)
-{
-
-	/*lprintf_P(PSTR("Lat: %f Lon: %f\n"), currentPositionData.latitude, currentPositionData.longitude);
-	lprintf_P(PSTR("Alt: %d Sats: %d\n"), currentPositionData.altitude, currentPositionData.numberOfSats);
-	lprintf_P(PSTR("vdop: %d hdop: %d\n"), currentPositionData.vdop, currentPositionData.hdop);*/
-
-}
-
 uint8_t gpsFailures = 0;
 
 void processMonitor(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In Process Monitor\n"));
+		lprintf_P(PSTR("In Proc Mon\n"));
 	#endif
 
 	uint32_t currentBitmask[3];
 	currentBitmask[0] = eeprom_read_dword(&EEcurrentTelemetryBitmap[0]);
 	currentBitmask[1] = eeprom_read_dword(&EEcurrentTelemetryBitmap[1]);
 	currentBitmask[2] = eeprom_read_dword(&EEcurrentTelemetryBitmap[2]);
+    uint16_t hfTimeToTx = eeprom_read_word(&EEhfTimeToTx);
+    uint8_t hfLengthToTx = eeprom_read_byte(&EEhfLenngthToTx);
+
+    if(((time/60) > hfTimeToTx) && hfSema == 0)
+    {
+        scheduleQueueAdd(&turnHfOn, time);
+        scheduleQueueAdd(&turnHfOff, time+hfLengthToTx);
+        eeprom_write_word(&EEhfTimeToTx, time+eeprom_read_byte(&EEhfDataTransmitInterval));
+    }
 
 	getGPS(&currentPositionData);
 	if(currentPositionData.status == 0)
@@ -730,7 +899,7 @@ void processMonitor(uint32_t time)
 		numberOfVSpeedSamples=0;
 		gpsFailures++;
 		//turn on GPS status telemetry channel
-		lprintf_P(PSTR("CBM1\n"));
+		//lprintf_P(PSTR("CBM1\n"));
 		currentBitmask[0] |= _BV(8);
 		#endif
 	}
@@ -757,15 +926,45 @@ void processMonitor(uint32_t time)
 	int8_t batterySetpoint = eeprom_read_byte(&EEbatteryHeaterSetpoint);;
 	if(batteryTemperature < batterySetpoint)
 	{
-	    lprintf_P(PSTR("CBM1\n"));
 		currentBitmask[0] |= (uint32_t)(1<<24);
 	}
 
 	//GET RAW PACK VOLTAGE, If below Nominal, transmit
-	//if(batteryVoltage < NominalVoltage)
-	//{
-		//currentBitmask[0] |= _BV(1);
-	//}
+	//get raw pack voltage
+	//AD7998 Interfacing
+	i2cSendStart();
+	i2cWaitForComplete();
+	i2cSendByte(AD7992);
+	i2cWaitForComplete();
+	i2cSendByte(0x10);
+	i2cWaitForComplete();
+	i2cSendStop();
+	_delay_us(5);
+
+	i2cSendStart();
+	i2cWaitForComplete();
+	i2cSendByte(AD7992+1);
+	i2cWaitForComplete();
+	i2cReceiveByte(1);
+	i2cWaitForComplete();
+	uint16_t batteryValue = (uint16_t)i2cGetReceivedByte() << 8;
+	i2cWaitForComplete();
+	i2cReceiveByte(0);
+	i2cWaitForComplete();
+	batteryValue += i2cGetReceivedByte();
+	i2cWaitForComplete();
+	i2cSendStop();
+	batteryValue &= 0x0FFF;
+	//This is not such a magic value.  12 bits AD = 4096
+	//Divider network = 4.07 kohms and 20 khoms
+	//(3.3 volts / 4096) * (24.07/4.07) = 0.0047647
+	//Multiply by 10 to get bigger value.
+	batteryValue = (uint16_t)((((float)batteryValue*0.0047647))*10.);
+	uint8_t outputVoltage = (uint8_t)batteryValue;
+	if(batteryValue < 15)
+	{
+		currentBitmask[0] |= _BV(1);
+	}
 
     eeprom_write_dword(&EEcurrentTelemetryBitmap[0], currentBitmask[0]);
     eeprom_write_dword(&EEcurrentTelemetryBitmap[1], currentBitmask[1]);
@@ -825,6 +1024,13 @@ void calculateVspeed(uint32_t time)
 void timedCutdown(uint32_t time)
 {
 	//BEFORE FLIGHT
+	i2cSendStart();
+    i2cWaitForComplete();
+    i2cSendByte(0x10);
+    i2cWaitForComplete();
+    i2cSendByte(0x99);
+    i2cWaitForComplete();
+    i2cSendStop();
 	//Send Comm Controller the cutdown command
 	//In response, will  I receive the Cutdown Now command?
 }
@@ -983,17 +1189,18 @@ void autoBallast(uint32_t time)
 void collectData(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In Data Collector\n"));
+		lprintf_P(PSTR("In Data Collect\n"));
 	#endif
 	char sampleString[SAMPLESTRINGSIZEINCHARS];
 	memset(sampleString, 0x00, SAMPLESTRINGSIZEINCHARS);
-
 	//get time
 	uint32_t epochNow = now();
+	//lprintf("1 ");
 	//get ambient pressure
 	long myPressure;
 	long myTemp;
 	bmp085Convert(&myTemp, &myPressure);
+	//lprintf("2 ");
 	//get FC temp
 	uint16_t rawFCTemp;
 	int8_t internalTemp;
@@ -1001,16 +1208,17 @@ void collectData(uint32_t time)
 	int16_t fctinm = get12bit2scomp(rawFCTemp);
 	internalTemp = (int8_t)(fctinm/16);
 	//Convert to 8 bit
-
+//lprintf("3 ");
 	//get ext temp
 	uint16_t rawExtTemp = tmp100rawTemp(TMP100EXT)>>4;
 	int16_t externalTemperature = get12bit2scomp(rawExtTemp);
-
+    lprintf("4 ");
 	//get battetry temp
 	uint16_t rawBattTemp = tmp100rawTemp(TMP101BH)>>4;
 	int16_t btinm = get12bit2scomp(rawBattTemp);
 	int8_t batteryTemperature = (int8_t)(btinm/16);
 	//conver to 8 bit
+   //lprintf("5 ");
 
 	//get humidity
 	//NEED COMMANDS FROM TIM
@@ -1041,7 +1249,7 @@ void collectData(uint32_t time)
 	i2cSendStop();
 
 	humFinal = ((uint16_t)humidity[0] << 8) | humidity[1];
-
+    //lprintf("6 ");
 	//get coud sensor value
 	uint8_t cloudVal[2]= {0,0};
 	uint8_t cloudFinal;
@@ -1069,8 +1277,8 @@ void collectData(uint32_t time)
 	i2cWaitForComplete();
 	i2cSendStop();
 	cloudFinal = (cloudVal[0] << 6) | (cloudVal[1] >> 2);
+	//lprintf("7 ");
 	//NEED COMMANDS FROM TIM
-
 	//get longitude
 	//get latitude
 	//get altitude
@@ -1080,8 +1288,7 @@ void collectData(uint32_t time)
 	//get HDOP
 	//get VDOP
 	struct gpsData myGPS = currentPositionData;
-
-	//Convert HDOP and VDOP to 16 bits
+    //Convert HDOP and VDOP to 16 bits
 
 	//get climb rate
 	//This is global variable VSpeedAvg
@@ -1095,7 +1302,6 @@ void collectData(uint32_t time)
 	i2cSendByte(0x10);
 	i2cWaitForComplete();
 	i2cSendStop();
-
 	_delay_us(5);
 
 	i2cSendStart();
@@ -1111,7 +1317,6 @@ void collectData(uint32_t time)
 	batteryValue += i2cGetReceivedByte();
 	i2cWaitForComplete();
 	i2cSendStop();
-
 	batteryValue &= 0x0FFF;
 	//This is not such a magic value.  12 bits AD = 4096
 	//Divider network = 4.07 kohms and 20 khoms
@@ -1119,7 +1324,7 @@ void collectData(uint32_t time)
 	//Multiply by 10 to get bigger value.
 	batteryValue = (uint16_t)((((float)batteryValue*0.0047647))*10.);
 	uint8_t outputVoltage = (uint8_t)batteryValue;
-
+    //lprintf("8 ");  POTENTIAL FREEZE SPOT AFTER THIS.
 	//get ballast valve state
 	uint8_t ballastError = 0;
 	i2cSendStart();
@@ -1147,9 +1352,8 @@ void collectData(uint32_t time)
 	valveStatus += i2cGetReceivedByte();
 	ballastError |= i2cWaitForComplete();
 	i2cSendStop();
-
 	//1 = open, 0 = closed
-
+    //lprintf("9 ");
 	//get ballast remaining
 	i2cSendStart();
 	ballastError |= i2cWaitForComplete();
@@ -1176,10 +1380,9 @@ void collectData(uint32_t time)
 	ballastRemaining += (uint16_t)i2cGetReceivedByte();
 	ballastError |= i2cWaitForComplete();
 	i2cSendStop();
-
 	statusCode = (statusCode & 0xFFFD) | (ballastError << 1);
 	//16 bit grams remaining
-
+    //lprintf("10 ");
 	//get status code
 	//variable StatusCode
 
@@ -1210,8 +1413,8 @@ void collectData(uint32_t time)
 	i2cWaitForComplete();
 	i2cSendStop();
 	heliumTemperature = (int16_t)(((uint16_t)helVal[0] * 256) + (helVal[1]));
+	//lprintf("11 ");
 	//NEED COMMANDS FROM TIM
-
 	//format into string
 	sprintf_P(sampleString, PSTR("%ld," //Epoch
 		"%ld,%ld," 	//Ambient Pressure Raw and Calculate
@@ -1259,8 +1462,8 @@ void collectData(uint32_t time)
 		ballastRemaining,
 		-14,
 		statusCode, heliumTemperature);
-
-	//Pad with spaces
+        //Pad with spaces
+   // lprintf("12 ");
 	uint8_t ssLen = strlen(sampleString);
 	uint8_t k;
 	for(k = ssLen; k < (SAMPLESTRINGSIZEINCHARS - 2); k++)
@@ -1268,7 +1471,7 @@ void collectData(uint32_t time)
 		sampleString[k] = '.';
 	}
 	//lprintf("pw: %d\n", k);
-
+    lprintf("13 ");
 	sampleString[SAMPLESTRINGSIZEINCHARS-2] = '\r';
 	sampleString[SAMPLESTRINGSIZEINCHARS-1] = '\n';
 	sampleString[SAMPLESTRINGSIZEINCHARS] = '\0';
@@ -1335,23 +1538,28 @@ void transmitShortReport(uint32_t time)
             reportCounterL++;
         }
 
-
+		uint32_t rightNow = now();
 		packet1[0] = lon_code>>16;
 		packet1[1] = lon_code>>8;
 		packet1[2] = lon_code;
-		packet1[3] = currentPositionData.bearing >> 1;
-		packet1[4] = currentPositionData.altitude >> 8;
-		packet1[5] = (currentPositionData.altitude & 0x00F0) | (reportCounterL & 0x0003);
+		packet1[3] = (currentPositionData.altitude/50) >> 2;
+		packet1[4] = (((currentPositionData.altitude/50) << 6) & 0xC0) | (((rightNow / 60) >> 8) & 0x0F);
+		packet1[5] = (rightNow/60);
 
-		uint32_t rightNow = now();
+
 		packet2[0] = lat_code>>16;
 		packet2[1] = lat_code>>8;
 		packet2[2] = lat_code;
 		packet2[3] = currentPositionData.speed;
-		packet2[4] = (rightNow/60) >> 8;
-		packet2[5] = ((rightNow/60) & 0x00F0) | ((reportCounterH<<2) & 0x000C);
+		packet2[4] = (1<<4) | (((rightNow / 60) >> 8) & 0x0F);
+		packet2[5] = (rightNow/60);
 
-        lprintf("Short Report: ");
+		if(currentPositionData.status != 0)
+        {
+            packet2[4] |= _BV(5);
+        }
+
+        /*lprintf("SR: ");
         for(int i = 0; i < 6; i++)
         {
             lprintf_P(PSTR("%x "), packet1[i]);
@@ -1360,7 +1568,7 @@ void transmitShortReport(uint32_t time)
         {
             lprintf_P(PSTR("%x "), packet2[i]);
         }
-        lprintf("\n");
+        lprintf("\n");*/
 
 
 		reportCounterL++;
@@ -1400,9 +1608,10 @@ void transmitShortReport(uint32_t time)
         i2cWaitForComplete();
 
         i2cSendStop();
-
-        scheduleQueueAdd(&transmitShortReport, time+desiredTX);
-		//BEFORE FLIGHT Send this data to the comm controller
+        if(time != 0xFFFFFFFF)
+        {
+            scheduleQueueAdd(&transmitShortReport, time+desiredTX);
+        }
 	}
 }
 
@@ -1416,18 +1625,22 @@ void transmitSamples(uint32_t time)
 	uint16_t maxTX = eeprom_read_word(&EEmaxAllowableTXInterval);
 	uint16_t desiredTX = eeprom_read_word(&EEdataTransmitInterval);
 
-	if(maxTX > desiredTX)
-		scheduleQueueAdd(&transmitSamples, time+desiredTX);
-	else
-		scheduleQueueAdd(&transmitSamples, time+maxTX);
+    if(time == 0xFFFFFFFF)
+    {
 
+    } else{
+        if(maxTX > desiredTX)
+            scheduleQueueAdd(&transmitSamples, time+desiredTX);
+        else
+            scheduleQueueAdd(&transmitSamples, time+maxTX);
+    }
 
 }
 
 void updateCommHFTelemetry(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In HF Telem\n"));
+		//lprintf_P(PSTR("In HF Telem\n"));
 	#endif
 	//ALL 8 BITS VALUES!
 	//send 8 bits of ballast remaining
@@ -1447,10 +1660,15 @@ void rapidHFXmit(uint32_t time)
 	#ifdef FCPUDEBUG
 		lprintf_P(PSTR("In Rapid HF TX\n"));
 	#endif
-	if(rapidHFEnable == 1)
+	if(rapidHFEnable == 1 && hfSema != 2)
 	{
 		//send comm controller rapid HF command
+		POWERPORT |= _BV(I2C9PT);
+		hfSema = 1;
 		scheduleQueueAdd(&rapidHFXmit, time+eeprom_read_byte(&EEhfRapidTransmit));
+	} else {
+        POWERPORT &= ~_BV(I2C9PT);
+        hfSema = 0;
 	}
 }
 
@@ -1473,7 +1691,7 @@ void ballastStaticTickle(uint32_t time)
 		if(errorTolerance >= CRITCOMFAIL)
 		{
 			#ifdef FCPUDEBUG
-				lprintf_P(PSTR("Ballast Error\n"));
+				//lprintf_P(PSTR("Ballast Error\n"));
 			#endif
 			statusCode = (statusCode & 0xFFFD) | (1 << 1);
 		} else {
@@ -1488,7 +1706,7 @@ void ballastStaticTickle(uint32_t time)
 void flightPhaseLogic(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In Phase Logic\n"));
+		//lprintf_P(PSTR("In Phase Logic\n"));
 	#endif
 	uint8_t currentPhase = eeprom_read_byte(&EEflightPhase);
 	struct gpsData myGPS = currentPositionData;
@@ -1505,7 +1723,7 @@ void flightPhaseLogic(uint32_t time)
 	{
 
 		case 0:
-			if(((PIND & _BV(TAKEOFFPIN)) == 1) && (myFlags & 1 == 1))
+			if(((PIND & _BV(TAKEOFFPIN))>>TAKEOFFPIN == 1) && (myFlags & 1 == 1))
 			{
 				#ifdef FCPUDEBUG
 					_delay_ms(500);
@@ -1517,13 +1735,15 @@ void flightPhaseLogic(uint32_t time)
 			}
 			#ifdef FCPUDEBUG
 				lprintf_P(PSTR("Phase 0: Prelaunch\n"));
+
 			#endif
 			//reschedule 1 second from now
 			scheduleQueueAdd(&flightPhaseLogic, time+1);
 			break;
 		case 1:
 			//change sample time to 30 seconds
-			eeprom_write_word(&EEdataCollectionInterval, 30);
+			//this is really stupid.  change this BEFORE FLIGHT
+			//eeprom_write_word(&EEdataCollectionInterval, 30);
 			//schedule rapid hf xmit
 			if(rapidHFEnable == 0)
 			{
@@ -1534,7 +1754,7 @@ void flightPhaseLogic(uint32_t time)
 
 
 			//reschedule 1 minute from now
-			if((myGPS.altitude > 8500) && (vSpeedAvg < 0) && (myFlags & 1 == 1))
+			if((myGPS.altitude > 8500) && (vSpeedAvg < 0) && (myFlags & 1 == 1) || (cutdownStatus == 1))
 			{
 				myPhase = 2;
 			}
@@ -1549,12 +1769,17 @@ void flightPhaseLogic(uint32_t time)
 			//make sure sat is enabled in here! BEFORE FLIGHT
 			if((vSpeedAvg < maydayVSpeed) || (thisAltitude < maydayAltitude)  || (cutdownStatus == 1) && (myFlags & 1 == 1))
 			{
+			    #ifdef FCPUDEBUG
+                    lprintf_P(PSTR("Phase 3 Criteria\n"));
+                    lprintf_P(PSTR("VS: %d A: %d\n"), vSpeedAvg, thisAltitude);
+                #endif
 				myPhase = 3;
 			}
 			#ifdef FCPUDEBUG
 				lprintf_P(PSTR("Phase 2: Cruise\n"));
 			#endif
 			scheduleQueueAdd(&flightPhaseLogic, time+30);
+			break;
 		case 3:
 			//disable sat in here! BEFORE FLIGHT
 			//enable rapid hf xmit
@@ -1563,7 +1788,7 @@ void flightPhaseLogic(uint32_t time)
 				scheduleQueueAdd(&rapidHFXmit, time);
 			}
 			rapidHFEnable = 1;
-			if((vSpeedAvg > maydayVSpeed) && (thisAltitude > maydayAltitude) && (cutdownStatus != 0) && (myFlags & 1 == 1))
+			if((vSpeedAvg > maydayVSpeed) && (thisAltitude > maydayAltitude) && (cutdownStatus == 0) && (myFlags & 1 == 1))
 			{
 					myPhase = 2;
 			}
@@ -1587,6 +1812,39 @@ void flightPhaseLogic(uint32_t time)
 		}
 
 	eeprom_write_byte(&EEflightPhase, (myFlags << 4) + myPhase);
+
+}
+
+void resetWatchdog(uint32_t time)
+{
+
+    wdt_reset();
+
+    #ifdef FCPUDEBUG
+        //lprintf_P(PSTR("Reset WDT\n"));
+    #endif
+
+    scheduleQueueAdd(&resetWatchdog, time+1);
+
+}
+
+void turnHfOff(uint32_t time)
+{
+    POWERPORT &= ~_BV(I2C9PT);
+
+    #ifdef FCPUDEBUG
+        lprintf_P(PSTR("HF ON\n"));
+    #endif
+
+}
+
+void turnHfOn(uint32_t time)
+{
+
+    POWERPORT |= _BV(I2C9PT);
+    #ifdef FCPUDEBUG
+        lprintf_P(PSTR("HF OFF\n"));
+    #endif
 
 }
 
@@ -1723,4 +1981,11 @@ int lprintf_P(const char *str, ...)
 		return 0;
 	}
 	_delay_ms(100);
+}
+
+void get_mcusr(void)
+{
+    mcusr_mirror = MCUSR;
+    MCUSR = 0;
+    wdt_disable();
 }

@@ -100,9 +100,9 @@ void i2cInit(void)
 //going to set it ourself, damnit
 void i2cSetTheDamnTWBRMyself(uint8_t myOwnTWBR)
 {
-	
+
 	TWBR = myOwnTWBR;
-	
+
 }
 
 void i2cSetBitrate(uint16_t bitrateKHz)
@@ -116,7 +116,7 @@ void i2cSetBitrate(uint16_t bitrateKHz)
 		// set TWPS to zero
 		TWSR &= ~(_BV(TWPS0) | _BV(TWPS1));
 	#endif
-	// calculate bitrate division	
+	// calculate bitrate division
 	//printf("1: %d\n", (uint16_t)(799./100.));
 	bitrate_div = (uint8_t)(((float)F_CPU/(float)10001))/(float)bitrateKHz;
 	if(bitrate_div >= 16)
@@ -124,10 +124,10 @@ void i2cSetBitrate(uint16_t bitrateKHz)
 	//printf("bitrate: %d\n", bitrate_div);
 	//printf("k: %d\n", bitrateKHz);
 	TWBR = bitrate_div;
-	
+
 	//TWSR |= _BV(TWPS0) | _BV(TWPS1);
 	//TWBR = 97;
-	
+
 }
 
 //Mask is right-adjusted
@@ -138,7 +138,7 @@ void i2cSetLocalDeviceAddr(uint8_t deviceAddr, uint8_t maskAddr, uint8_t genCall
 	TWAMR = maskAddr << 1;
 	I2cWhiteStarGeneralEn = wsGenCallEn;
 	I2cWhiteStarGeneralAddr = wsGenCallAddr;
-	
+
 }
 
 void i2cSetSlaveReceiveHandler(void (*i2cSlaveRx_func)(uint8_t receiveDataLength, uint8_t* recieveData))
@@ -183,9 +183,9 @@ uint8_t i2cWaitForComplete(void)
 	while( !(TWCR & _BV(TWINT) ) && i < 100 )
 	{
 		i++;
-		_delay_ms(1);
+		_delay_us(150);
 	}
-	if(i >= 99)
+	if(i >= 98)
 	{
 		return 1;
 	}
@@ -376,7 +376,7 @@ void i2cMasterTransferNI(uint8_t deviceAddr, uint8_t sendlength, uint8_t* sendda
 		// send device address with write
 		i2cSendByte( deviceAddr & 0xFE );
 		i2cWaitForComplete();
-		
+
 		// send data
 		while(sendlength)
 		{
@@ -412,7 +412,7 @@ void i2cMasterTransferNI(uint8_t deviceAddr, uint8_t sendlength, uint8_t* sendda
 		i2cWaitForComplete();
 		*receivedata++ = i2cGetReceivedByte();
 	}
-	
+
 	// transmit stop condition
 	// leave with TWEA on for slave receiving
 	i2cSendStop();
@@ -441,7 +441,7 @@ ISR(TWI_vect)
 		// send device address
 		i2cSendByte(I2cDeviceAddrRW);
 		break;
-	
+
 	// Master Transmitter & Receiver status codes
 	case TW_MT_SLA_ACK:					// 0x18: Slave address acknowledged
 	case TW_MT_DATA_ACK:				// 0x28: Data acknowledged

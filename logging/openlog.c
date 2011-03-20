@@ -73,6 +73,10 @@ void initOpenLogFlight(void)
 	_delay_ms(2000);
 	//Ensure we're in command mode.
 	fprintf(&olout, "%c%c%c\r", (char)0x1a,(char)0x1a,(char)0x1a);
+	while((char)ol_getchar() != '>');
+
+	fprintf(&olout,"echo off\r");
+	while((char)ol_getchar() != '>');
 
 }
 
@@ -107,7 +111,6 @@ void getDataSample(uint16_t sampleNumber, char *returnString)
 	i=0;
 	volatile char thisChar;
 	fprintf(&olout, "read samples.txt %ld %d", (uint32_t)((uint32_t)sampleNumber * (SAMPLESTRINGSIZEINCHARS + 5)), SAMPLESTRINGSIZEINCHARS);
-
 	loop_until_bit_is_set(UCSR0A, UDRE0);
     UDR0 = '\r';
     ol_getchar();
@@ -118,10 +121,13 @@ void getDataSample(uint16_t sampleNumber, char *returnString)
 		returnString[i] = thisChar;
 		i++;
 	}
-	//lprintf("Read: %d %d\n", (sampleNumber * (SAMPLESTRINGSIZEINCHARS + 5)), SAMPLESTRINGSIZEINCHARS);
-
+	//lprintf("Read: %ld %d\n", (uint32_t)((uint32_t)sampleNumber * (SAMPLESTRINGSIZEINCHARS + 5)), SAMPLESTRINGSIZEINCHARS);
+    if(thisChar != '>')
+    {
+      while( (thisChar = (char)ol_getchar())!='>');
+    }
 	returnString[i] = '\0';
-	//while( (thisChar = (char)ol_getchar())!='>');
+	//
 
 }
 
