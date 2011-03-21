@@ -85,10 +85,12 @@ int8_t scheduleQueueAlterTime(scheduledFunction thisFunction, uint32_t newTime)
 				lprintf_P(PSTR("Running some function\n"));
 			#endif*/
 			scheduleQueueAdd(storageFunction, newTime);
-		}
+			return 0;
 		} else {
 			scheduleQueueAdd(storageFunction, scheduleTime);
+
 		}
 
 	}
+	return 1;
 }

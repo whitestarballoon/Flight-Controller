@@ -244,50 +244,11 @@ int main (void)
 
 	lprintf("SSAlive\n");
 
-	//lprintf("psamp\n");
-	//Test Routine for data Storage and Retreival
-	/*char sample1[SAMPLESTRINGSIZEINCHARS]= "0,583,0,72,0,+18.24";
-	char sample2[SAMPLESTRINGSIZEINCHARS]= "0,282,0,80,0,+18.90";
-	char sample3[SAMPLESTRINGSIZEINCHARS]= "0,163,0,04,0,-24.20";
-
-	putDataSample(sample1);
-	eeprom_write_word(&EEbatchSampleEnd, eeprom_read_word(&EEbatchSampleEnd)+1);
-
-	putDataSample(sample2);
-	eeprom_write_word(&EEbatchSampleEnd, eeprom_read_word(&EEbatchSampleEnd)+1);
-
-	putDataSample(sample3);
-	eeprom_write_word(&EEbatchSampleEnd, eeprom_read_word(&EEbatchSampleEnd)+1);
-
-	lprintf("SampleStart: %d\n", eeprom_read_word(&EEbatchSampleStart));
-	lprintf("SampleEnd: %d\n", eeprom_read_word(&EEbatchSampleEnd));
-
-
-	loadBatch();
-	*/
-
-	/*while(1)
-	{
-		struct gpsData testStruct;
-		getGPS(&testStruct);
-		_delay_ms(500);
-		lprintf("stat: %c sats: %d\n", testStruct.status, testStruct.numberOfSats);
-		lprintf("lat: %f lon: %f\n", testStruct.latitude, testStruct.longitude);
-		lprintf("now: %ld\n", now());
-
-	}*/
-
     if((mcusr_mirror & 0x08) == 0x08)
     {
         //lprintf("WDTReset\n");
     }
 
-
-
-    //lprintf("WDTCR: %x\n", WDTCSR);
-
-    //REMOVE BEFORE FLIGHT:
-    //eeprom_write_byte(&EEflightPhase, 16);
 
 	uint32_t rnow = now();
 	scheduleQueueAdd(&resetWatchdog, rnow);
@@ -430,7 +391,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			//set Custom Bitmask Select
 			//if(receiveDataLength == 13)
 			{
-				eeprom_write_block((uint16_t*)recieveData[1], &EEcurrentTelemetryBitmap, sizeof(uint32_t)*3);
+				eeprom_write_block((uint8_t*)recieveData[1], &EEcurrentTelemetryBitmap, sizeof(uint32_t)*3);
 			}
 			break;
 		case 0x0A:
@@ -491,7 +452,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			{
 				//It Looks Like You're trying to Schedule a cutdown!
 				//uint32_t time = ((uint32_t)recieveData[0] << 24) + ((uint32_t)recieveData[1] << 16) + ((uint32_t)recieveData[2] << 8) + recieveData[3];
-				uint32_t time = ((uint32_t)recieveData[0]<<16) + ((uint32_t)recieveData[1] << 8);
+				uint32_t time = (((uint32_t)recieveData[0]<<8) + ((uint32_t)recieveData[1]))*60;
 				scheduleQueueAdd(&timedCutdown, time);
 			}
 			break;

@@ -56,6 +56,7 @@ void getGPS(struct gpsData *outputData)
 		}
 		lineBuff[i] = '\0';
 		errorTracker++;
+		wdt_reset();
 	} while((strncmp("$GPRMC", lineBuff, 6) != 0) && errorTracker < 100);
 	// End GPRMC Acquisition Section
 
@@ -148,6 +149,7 @@ void getGPS(struct gpsData *outputData)
 			i++;
 		}
 		errorTracker++;
+		wdt_reset();
 		lineBuff[i] = '\0';
 	} while((strncmp("$GPGSA", lineBuff, 6) != 0) && errorTracker < 100);
 	// End GPGSA Acquisition Section
@@ -210,6 +212,7 @@ void getGPS(struct gpsData *outputData)
 		}
 		lineBuff[i] = '\0';
 		errorTracker++;
+		wdt_reset();
 	} while((strncmp("$GPGGA", lineBuff, 6) != 0) && errorTracker < 100);
 	// End GPGGA Acquisition Section
     wdt_reset();
