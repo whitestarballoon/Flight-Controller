@@ -203,20 +203,32 @@ int main (void)
 
 	lprintf("WSB CPU Alive\n");
     wdt_enable(WDTO_8S);
-	error = getTime(&seconds, &minutes, &hours, &days);
 
 
     #ifdef FCPUDEBUG
 		lprintf_P(PSTR("Set Epoch\n"));
 	#endif
-	eeprom_write_word(&EEcurrentBatchNumber, 0);
-    eeprom_write_word(&EEbatchSampleStart, 0);
-    eeprom_write_word(&EEbatchSampleEnd, 0);
-    writeEpochStart(seconds, minutes, hours, days);
+
 	if(eeprom_read_byte(&EEEpochLock) == 0)
 	{
 		eeprom_write_dword(&EEepochOffset, 0);
 	}
+	//error = getTime(&seconds, &minutes, &hours, &days);
+
+	uint32_t offset = eeprom_read_dword(&EEepochOffset);
+	uint8_t offsetDays = offset / 86400;
+	uint8_t offsetHours = (offset - (offsetDays * 86400)) / 3600;
+	uint8_t offsetMinutes = (offset - (offsetDays * 86400) - (offsetHours * 3600)) / 60;
+	uint8_t offsetSeconds = (offset - (offsetDays * 86400) - (offsetHours * 3600) - (offsetMinutes * 60));
+    ds3231write(0x00, offsetSeconds);
+    ds3231write(0x01,  offsetMinutes);
+    ds3231write(0x02,  offsetHours);
+    ds3231write(0x03,  offsetDays);
+
+    eeprom_write_word(&EEcurrentBatchNumber, 0);
+    eeprom_write_word(&EEbatchSampleStart, 0);
+    eeprom_write_word(&EEbatchSampleEnd, 0);
+    writeEpochStart(0, 0, 0, 0);
 
 	lprintf("Still Alive\n");
 
@@ -251,7 +263,6 @@ int main (void)
 	scheduleQueueAdd(&collectData, rnow);
 	scheduleQueueAdd(&transmitSamples, rnow);
 	scheduleQueueAdd(&transmitShortReport, rnow+20);  //Special case to give the comm controller a chance
-	scheduleQueueAdd(&updateCommHFTelemetry, rnow);
 	scheduleQueueAdd(&ballastStaticTickle, rnow);
 	scheduleQueueAdd(&autoBallast, rnow);
 	scheduleQueueAdd(&flightPhaseLogic, rnow);
@@ -536,23 +547,11 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
                 eeprom_write_byte(&EEhfLenngthToTx, recieveData[0]);
             }
         break;
-        case 0xef:
-        //Cam 1 minute
-        break;
-        case 0xf0:
-        //Cam Start
-        break;
-        case 0xef:
-        //Cam Stop
-        break;
         case 0xf1:
             transmitSamples(0xFFFFFFFF);
             break;
         case 0xf2:
             transmitShortReport(0xFFFFFFFF);
-            break;
-        case 0xF3:
-            //dumpInternalState();
             break;
         case 0xf4:
             while(1);
@@ -721,7 +720,7 @@ void updateSpeedDial(uint16_t speedDial)
             eeprom_write_word(&EEdataTransmitInterval, 300);
         }
         break;
-        case 0x08:
+        /*case 0x08:
         {
             //Need Data Now!
             eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b00000000000010101010000100001000);
@@ -740,7 +739,7 @@ void updateSpeedDial(uint16_t speedDial)
             eeprom_write_word(&EEdataCollectionInterval, 60);
             eeprom_write_word(&EEdataTransmitInterval, 60);
         }
-        break;
+        break;*/
 
     }
 }
@@ -1013,7 +1012,7 @@ void autoBallast(uint32_t time)
 		if(vSpeedAvg > (currentTargetVspeed + babySitVertSpeed)/2)
 		{
 			#ifdef FCPUDEBUG
-				lprintf_P(PSTR("Babysit: 1/2 T\n"));
+				//lprintf_P(PSTR("Babysit: 1/2 T\n"));
 			#endif
 			//Close ballast
 			//Send i2c address 0x09, 0d18
@@ -1027,7 +1026,7 @@ void autoBallast(uint32_t time)
 			if(errorTolerance >= CRITCOMFAIL)
 			{
 				#ifdef FCPUDEBUG
-					lprintf_P(PSTR("Blst Error\n"));
+					//lprintf_P(PSTR("Blst Error\n"));
 				#endif
 				statusCode = (statusCode & 0xFFFD) | (1 << 1);
 			} else {
@@ -1037,14 +1036,14 @@ void autoBallast(uint32_t time)
 			ballastBabySit = 0;
 		} else {
 			#ifdef FCPUDEBUG
-				lprintf_P(PSTR("Babysit: Waiting\n"));
+				//lprintf_P(PSTR("Babysit: Waiting\n"));
 			#endif
 			scheduleQueueAdd(&autoBallast, time+10);
 		}
 	} else {
 
 		#ifdef FCPUDEBUG
-			lprintf_P(PSTR("No babysity\n"));
+			//lprintf_P(PSTR("No babysity\n"));
 		#endif
 
 		//If we're above the safety threshold
@@ -1061,19 +1060,19 @@ void autoBallast(uint32_t time)
 			if(thisAltitude <= targetAltitude && vSpeedAvg > currentTargetVspeed)
 			{
 				#ifdef FCPUDEBUG
-					lprintf_P(PSTR("Ballast: TVSpeed+\n"));
+					//lprintf_P(PSTR("Ballast: TVSpeed+\n"));
 				#endif
 				currentTargetVspeed = eeprom_read_word(&EEballastTargetPositiveVSpeed);
 			} else if(thisAltitude > targetAltitude)
 			{
 				#ifdef FCPUDEBUG
-					lprintf_P(PSTR("Ballast: TVSpeed-\n"));
+					//lprintf_P(PSTR("Ballast: TVSpeed-\n"));
 				#endif
 				currentTargetVspeed = eeprom_read_word(&EEballastTargetNegativeVSpeed);
 			} else if(thisAltitude < targetAltitude && vSpeedAvg < currentTargetVspeed)
 			{
 				#ifdef FCPUDEBUG
-					lprintf_P(PSTR("Ballast: TVSpeed0\n"));
+					//lprintf_P(PSTR("Ballast: TVSpeed0\n"));
 				#endif
 				currentTargetVspeed = 0;
 			}
@@ -1510,17 +1509,6 @@ void transmitShortReport(uint32_t time)
             packet2[4] |= _BV(5);
         }
 
-        /*lprintf("SR: ");
-        for(int i = 0; i < 6; i++)
-        {
-            lprintf_P(PSTR("%x "), packet1[i]);
-        }
-        for(int i = 0; i < 6; i++)
-        {
-            lprintf_P(PSTR("%x "), packet2[i]);
-        }
-        lprintf("\n");*/
-
 
 		reportCounterL++;
 		reportCounterH++;
@@ -1586,21 +1574,6 @@ void transmitSamples(uint32_t time)
             scheduleQueueAdd(&transmitSamples, time+maxTX);
     }
 
-}
-
-void updateCommHFTelemetry(uint32_t time)
-{
-	#ifdef FCPUDEBUG
-		//lprintf_P(PSTR("In HF Telem\n"));
-	#endif
-	//ALL 8 BITS VALUES!
-	//send 8 bits of ballast remaining
-	//send raw pack voltage
-	//send top temp
-
-	//send to comm controller
-
-	scheduleQueueAdd(&updateCommHFTelemetry, time+60);
 }
 
 //Simply add this to the scheduler queue if you want it.
@@ -1809,7 +1782,7 @@ void incrementEpoch(uint32_t time)
 
 inline uint32_t now(void)
 {
-	uint8_t seconds, minutes, hours, days;
+    uint8_t seconds, minutes, hours, days;
 	uint8_t error;
 	error = getTime(&seconds, &minutes, &hours, &days);
 	while(error != 0)
@@ -1817,7 +1790,8 @@ inline uint32_t now(void)
 		_delay_ms(50);
 		error = getTime(&seconds, &minutes, &hours, &days);
 	}
-	return getEpochSeconds(seconds, minutes, hours, days) + eeprom_read_dword(&EEepochOffset);
+    return getEpochSeconds(seconds, minutes, hours, days);
+
 }
 
 void ioinit (void)
