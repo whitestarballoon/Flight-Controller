@@ -313,7 +313,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 {
     uint8_t temp;
 
-    lprintf_P(PSTR("FCPU RX I2C\n"));
+    lprintf_P(PSTR("CPU I2C\n"));
     for(int i=0; i < receiveDataLength; i++)
     {
         lprintf("%x ", recieveData[i]);
@@ -588,55 +588,10 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 	}
 }
 
-/*void dumpInternalState(void)
-{
-
-    //Raw Batt Voltage
-    //get raw pack voltage
-	//AD7998 Interfacing
-	i2cSendStart();
-	i2cWaitForComplete();
-	i2cSendByte(AD7992);
-	i2cWaitForComplete();
-	i2cSendByte(0x10);
-	i2cWaitForComplete();
-	i2cSendStop();
-	_delay_us(5);
-
-	i2cSendStart();
-	i2cWaitForComplete();
-	i2cSendByte(AD7992+1);
-	i2cWaitForComplete();
-	i2cReceiveByte(1);
-	i2cWaitForComplete();
-	uint16_t batteryValue = (uint16_t)i2cGetReceivedByte() << 8;
-	i2cWaitForComplete();
-	i2cReceiveByte(0);
-	i2cWaitForComplete();
-	batteryValue += i2cGetReceivedByte();
-	i2cWaitForComplete();
-	i2cSendStop();
-	batteryValue &= 0x0FFF;
-	//This is not such a magic value.  12 bits AD = 4096
-	//Divider network = 4.07 kohms and 20 khoms
-	//(3.3 volts / 4096) * (24.07/4.07) = 0.0047647
-	//Multiply by 10 to get bigger value.
-	float myVoltage = ((float)batteryValue*0.0047647);
-	lprintf("Batt Volts: %f\n", myVoltage);
-
-    //Batt Temp
-    uint16_t rawBattTemp = tmp100rawTemp(TMP101BH)>>4;
-	int16_t btinm = get12bit2scomp(rawBattTemp);
-	int8_t batteryTemperature = (int8_t)(btinm/16);
-	lprintf("Batt Temp: %f\n", (float)btinm/16.);
-    //
-
-}
-*/
 void updateSpeedDial(uint16_t speedDial)
 {
     #ifdef FCPUDEBUG
-        lprintf_P(PSTR("Change SpdDial\n"));
+        lprintf_P(PSTR("SpdDial\n"));
     #endif
     switch(speedDial)
     {
@@ -836,6 +791,7 @@ void processMonitor(uint32_t time)
     }
 
 	getGPS(&currentPositionData);
+
 	if(currentPositionData.status == 0)
 	{
 		gpsFailures = 0;
@@ -888,7 +844,8 @@ void processMonitor(uint32_t time)
 	i2cSendByte(0x10);
 	i2cWaitForComplete();
 	i2cSendStop();
-	_delay_us(5);
+
+	_delay_ms(5);
 
 	i2cSendStart();
 	i2cWaitForComplete();
@@ -910,6 +867,7 @@ void processMonitor(uint32_t time)
 	//Multiply by 10 to get bigger value.
 	batteryValue = (uint16_t)((((float)batteryValue*0.0047647))*10.);
 	uint8_t outputVoltage = (uint8_t)batteryValue;
+
 	if(batteryValue < 15)
 	{
 		currentBitmask[0] |= _BV(1);
@@ -921,6 +879,7 @@ void processMonitor(uint32_t time)
 
 
 	scheduleQueueAdd(&processMonitor, time+5);
+
 }
 
 //Calculate Running Avg. of Vertical Speed
@@ -1559,7 +1518,7 @@ void transmitShortReport(uint32_t time)
 void transmitSamples(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In Sample TX\n"));
+		lprintf_P(PSTR("Sample TX\n"));
 	#endif
 	loadBatch();
 	flushSatQueue();
@@ -1584,7 +1543,7 @@ void transmitSamples(uint32_t time)
 void rapidHFXmit(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In Rapid HF TX\n"));
+		lprintf_P(PSTR("Rapid HF TX\n"));
 	#endif
 	if(rapidHFEnable == 1 && hfSema != 2)
 	{
@@ -1602,7 +1561,7 @@ void rapidHFXmit(uint32_t time)
 void ballastStaticTickle(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In ballast tickle\n"));
+		lprintf_P(PSTR("bllst tckl\n"));
 	#endif
 	if((time - lastBallastTime) > 1800)
 	{
@@ -1660,7 +1619,7 @@ void flightPhaseLogic(uint32_t time)
 				//Save time
 			}
 			#ifdef FCPUDEBUG
-				lprintf_P(PSTR("Phase 0: Prelaunch\n"));
+				lprintf_P(PSTR("Phase 0: Pre\n"));
 
 			#endif
 			//reschedule 1 second from now
@@ -1697,7 +1656,7 @@ void flightPhaseLogic(uint32_t time)
 			{
 			    #ifdef FCPUDEBUG
                     lprintf_P(PSTR("Phase 3 Criteria\n"));
-                    lprintf_P(PSTR("VS: %d A: %d\n"), vSpeedAvg, thisAltitude);
+                    //lprintf_P(PSTR("VS: %d A: %d\n"), vSpeedAvg, thisAltitude);
                 #endif
 				myPhase = 3;
 			}
