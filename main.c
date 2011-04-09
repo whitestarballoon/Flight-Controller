@@ -1211,7 +1211,7 @@ void collectData(uint32_t time)
 	i2cSendByte(0x10);
 	i2cWaitForComplete();
 	i2cSendStop();
-	_delay_us(5);
+	_delay_ms(5);
 
 	i2cSendStart();
 	i2cWaitForComplete();
@@ -1468,8 +1468,8 @@ void transmitShortReport(uint32_t time)
             packet2[4] |= _BV(5);
         }
 
-        lprintf("N: %lu\n", rightNow);
-
+        //lprintf("N: %lu\n", rightNow);
+        //lprintf("T1: %u T2: %u\n", ((packet1[4] & 0xF) <<8) + packet1[5], ((packet2[4] & 0xF)<<8) + packet2[5]);
 
 		reportCounterL++;
 		reportCounterH++;
