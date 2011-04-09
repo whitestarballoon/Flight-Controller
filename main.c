@@ -1509,6 +1509,8 @@ void transmitShortReport(uint32_t time)
             packet2[4] |= _BV(5);
         }
 
+        lprintf("N: %lu\n", rightNow);
+
 
 		reportCounterL++;
 		reportCounterH++;
@@ -1790,7 +1792,7 @@ inline uint32_t now(void)
 		_delay_ms(50);
 		error = getTime(&seconds, &minutes, &hours, &days);
 	}
-	lprintf("Now: %lu\n", getEpochSeconds(seconds, minutes, hours, days));
+	//lprintf("Now: %lu\n", getEpochSeconds(seconds, minutes, hours, days));
     return getEpochSeconds(seconds, minutes, hours, days);
 
 }
