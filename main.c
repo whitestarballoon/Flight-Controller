@@ -1717,7 +1717,7 @@ void flightPhaseLogic(uint32_t time)
 					myPhase = 2;
 			}
 			#ifdef FCPUDEBUG
-				lprintf_P(PSTR("Phase 3: FALLING OUT OF SKY\n"));
+				lprintf_P(PSTR("Phase 3: FALLING\n"));
 			#endif
 			scheduleQueueAdd(&flightPhaseLogic, time+1);
 			break;
@@ -1725,12 +1725,12 @@ void flightPhaseLogic(uint32_t time)
 			//reset HF and Sat Sample and Transmit Intervals to 1 hour
 			scheduleQueueAdd(&flightPhaseLogic, time+3600);
 			#ifdef FCPUDEBUG
-				lprintf_P(PSTR("Phase 4: Landed\n"));
+				lprintf_P(PSTR("Phase 4: Land\n"));
 			#endif
 			break;
 		default:
 			#ifdef FCPUDEBUG
-				lprintf_P(PSTR("ERROR!\n"));
+				lprintf_P(PSTR("ERR!\n"));
 			#endif
 			break;
 		}
@@ -1790,6 +1790,7 @@ inline uint32_t now(void)
 		_delay_ms(50);
 		error = getTime(&seconds, &minutes, &hours, &days);
 	}
+	lprintf("Now: %lu\n", getEpochSeconds(seconds, minutes, hours, days));
     return getEpochSeconds(seconds, minutes, hours, days);
 
 }

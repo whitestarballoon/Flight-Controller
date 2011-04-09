@@ -13,6 +13,9 @@
 	<File name="lib/bmp085.c" open="0" top="0" tabpos="0">
 		<Cursor position="1753" topLine="28" />
 	</File>
+	<File name="lib/ds3231.c" open="1" top="0" tabpos="7">
+		<Cursor position="2578" topLine="77" />
+	</File>
 	<File name="lib/i2c.c" open="1" top="0" tabpos="4">
 		<Cursor position="7648" topLine="293" />
 	</File>
@@ -23,7 +26,7 @@
 		<Cursor position="3346" topLine="107" />
 	</File>
 	<File name="main.c" open="1" top="1" tabpos="1">
-		<Cursor position="10460" topLine="358" />
+		<Cursor position="16251" topLine="532" />
 	</File>
 	<File name="parsing/epoch.c" open="1" top="0" tabpos="2">
 		<Cursor position="1326" topLine="43" />
