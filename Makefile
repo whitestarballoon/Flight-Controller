@@ -49,7 +49,7 @@ AVRDUDEMCU = m324p
 #     processor frequency. You can then use this symbol in your source code to 
 #     calculate timings. Do NOT tack on a 'UL' at the end, this will be done
 #     automatically to create a 32-bit value in your source code.
-F_CPU = 12000000
+F_CPU = 8000000
 
 
 # Output format. (can be srec, ihex, binary)
@@ -61,8 +61,8 @@ TARGET = main
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = ../genericLib/i2c.c ../genericLib/tmp100.c ../genericLib/bmp085.c ../genericLib/ds3231.c\
-		queue.c parsing/epoch.c parsing/gps.c logging/openlog.c comm/outputParse.c $(TARGET).c
+SRC = lib/i2c.c lib/tmp100.c lib/bmp085.c lib/ds3231.c\
+queue.c parsing/epoch.c parsing/gps.c logging/openlog.c comm/outputParse.c $(TARGET).c
 
 
 # List Assembler source files here.
