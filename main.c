@@ -126,7 +126,7 @@ void incrementEpoch(uint32_t);
 void updateSpeedDial(uint16_t speedDial);
 
 //Vspeed Calculation Variables
-int16_t vSpeedAvg;
+int16_t vSpeedAvg = 0;
 uint8_t numberOfVSpeedSamples=0;
 uint16_t lastAltitude=0;
 uint16_t lastRunTime=0;
@@ -202,13 +202,11 @@ int main (void)
 	_delay_ms(500);
 
 	lprintf("WSB CPU Alive\n");
-    wdt_enable(WDTO_8S);
-
 
     #ifdef FCPUDEBUG
 		lprintf_P(PSTR("Set Epoch\n"));
 	#endif
-
+	wdt_enable(WDTO_8S);
 	if(eeprom_read_byte(&EEEpochLock) == 0)
 	{
 		eeprom_write_dword(&EEepochOffset, 0);
@@ -235,23 +233,28 @@ int main (void)
 	// TMP100
 	setTMP100config(TMP100FC, 0xE0);
 
-	BMP085_Calibration();
+	lprintf("TMPCONF Complete\n");
+	//BMP085_Calibration();
 	// BMP085 END
 	//defaultEEPROM();
-	if(eeprom_read_byte(&EEEpochLock) == 0)
+	/*if(eeprom_read_byte(&EEEpochLock) == 0)
 	{
 		//defaultEEPROM();
-        initOpenLogTest();
+		
 	} else {
+		lprintf_P(PSTR("OpenLog Flight Init\n"));
 		initOpenLogFlight();
-	}
+	}*/
+
+	lprintf_P(PSTR("OpenLog Reset Init\n"));
+    initOpenLogTest();
 
 
 	lprintf("SSAlive\n");
 
     if((mcusr_mirror & 0x08) == 0x08)
     {
-        //lprintf("WDTReset\n");
+        lprintf("WDTReset\n");
     }
 
 
@@ -713,8 +716,8 @@ void dumpVarsToGSP(void)
 	lprintf_P(PSTR("ballastTrgt +Vspd: %d\n"), eeprom_read_word(&EEballastTargetPositiveVSpeed));
 	lprintf_P(PSTR("ballastTrgt -Vspd: %d\n"), eeprom_read_word(&EEballastTargetNegativeVSpeed));
 
-	lprintf_P(PSTR("maydayAlt: %ud\n"), eeprom_read_word(&EEmaydayAltitude));
-	lprintf_P(PSTR("maydayVSpd: %d\n"), eeprom_read_word(&EEmaydayVSpeed));
+	//lprintf_P(PSTR("maydayAlt: %ud\n"), eeprom_read_word(&EEmaydayAltitude));
+	//lprintf_P(PSTR("maydayVSpd: %d\n"), eeprom_read_word(&EEmaydayVSpeed));
 	_delay_ms(500);
 
 	lprintf_P(PSTR("ballastSftyAlt: %u\n"), eeprom_read_word(&EEballastSafetyAltThresh));
@@ -727,9 +730,9 @@ void dumpVarsToGSP(void)
 	//lprintf_P(PSTR("sunriseAntcpation: %ld\n"), eeprom_read_dword(&EEsunriseAnticipation));
 	_delay_ms(500);
 
-	lprintf_P(PSTR("maxAllowedTXInterval: %u\n"), eeprom_read_word(&EEmaxAllowableTXInterval));
+	//lprintf_P(PSTR("maxAllowedTXInterval: %u\n"), eeprom_read_word(&EEmaxAllowableTXInterval));
 
-	lprintf_P(PSTR("batteryHeaterSet: %d\n"), eeprom_read_byte(&EEbatteryHeaterSetpoint));
+	//lprintf_P(PSTR("batteryHeaterSet: %d\n"), eeprom_read_byte(&EEbatteryHeaterSetpoint));
 
 	lprintf_P(PSTR("dataSampleInterval: %u\n"), eeprom_read_word(&EEdataCollectionInterval));
 	lprintf_P(PSTR("batchTXInterval: %u\n"), eeprom_read_word(&EEdataTransmitInterval));
@@ -769,7 +772,7 @@ void dumpVarsToGSP(void)
 
 struct gpsData currentPositionData;
 uint8_t gpsFailures = 0;
-
+uint8_t ballastBabySit =0;
 void processMonitor(uint32_t time)
 {
 	#ifdef FCPUDEBUG
@@ -877,6 +880,22 @@ void processMonitor(uint32_t time)
     eeprom_write_dword(&EEcurrentTelemetryBitmap[1], currentBitmask[1]);
     eeprom_write_dword(&EEcurrentTelemetryBitmap[2], currentBitmask[2]);
 
+    //Code for Makerfaire Demo
+    lprintf_P(PSTR("***  Makerfaire Demo Info: "));
+    //altitude
+    lprintf_P(PSTR(" Altitude: %ld "), currentPositionData.altitude);
+    //vspeed
+    lprintf_P(PSTR("VSpeed: %ld "), vSpeedAvg);
+    //babysitting?
+    if(ballastBabySit)
+    {
+    	lprintf_P(PSTR("BabySitting? Yes"));
+    }
+    else
+    {
+    	lprintf_P(PSTR("BabySitting? No")); 
+    }
+    lprintf_P(PSTR("  ***\n"));
 
 	scheduleQueueAdd(&processMonitor, time+5);
 
@@ -944,7 +963,7 @@ void timedCutdown(uint32_t time)
 	//In response, will  I receive the Cutdown Now command?
 }
 
-uint8_t ballastBabySit;
+
 int16_t babySitVertSpeed;
 int16_t currentTargetVspeed;
 uint32_t lastBallastTime;
