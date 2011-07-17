@@ -83,11 +83,11 @@ void getGPS(struct gpsData *outputData)
 		 checksum = checksum ^ lineBuff[j];
 	}
 
-	if(checksum != tSum)
+	/*if(checksum != tSum)
 	{
 		outputData->status = 2;
 		return;
-	}
+	}*/
 
 	// Start GPRMC Parse Section
 	char latdir;
@@ -170,11 +170,11 @@ void getGPS(struct gpsData *outputData)
 		 checksum = checksum ^ lineBuff[j];
 	}
 
-	if(checksum != tSum)
+	/*if(checksum != tSum)
 	{
 		outputData->status = 2;
 		return;
-	}
+	}*/
 
 
 	float tempVdop, tempHdop;
@@ -232,11 +232,11 @@ void getGPS(struct gpsData *outputData)
 		 checksum = checksum ^ lineBuff[j];
 	}
 
-	if(checksum != tSum)
+	/*if(checksum != tSum)
 	{
 		outputData->status = 2;
 		return;
-	}
+	}*/
 
 	// Start GPGGA Parse Section
 

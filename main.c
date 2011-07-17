@@ -801,6 +801,7 @@ void processMonitor(uint32_t time)
 	} else {
 		#ifdef FCPUDEBUG
 			lprintf_P(PSTR("Bad GPS Data\n"));
+			lprintf_P(PSTR("Status: %d\n"), currentPositionData.status);
 		#endif
 		#ifndef OSHITDISABLE
 		//flush Vspeed
