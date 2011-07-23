@@ -81,6 +81,7 @@
 
 #define GSPDEBUG
 #define FCPUDEBUG
+#define MAKERFAIRE_GPS_DEBUG
 //#define OSHITDISABLE
 
 #define CRITCOMFAIL 25
@@ -257,6 +258,12 @@ int main (void)
         lprintf("WDTReset\n");
     }
 
+    #ifdef MAKERFAIRE_GPS_DEBUG
+    while(1)
+    {
+    	wdt_disable();
+    	debugPrintRawStrings();
+    }
 
 	uint32_t rnow = now();
 	scheduleQueueAdd(&resetWatchdog, rnow);
@@ -886,7 +893,7 @@ void processMonitor(uint32_t time)
     //altitude
     lprintf_P(PSTR(" Altitude: %ld "), currentPositionData.altitude);
     //vspeed
-    lprintf_P(PSTR("VSpeed: %ld "), vSpeedAvg);
+    lprintf_P(PSTR("VSpeed: %ld "), (int16_t)vSpeedAvg);
     //babysitting?
     if(ballastBabySit)
     {
@@ -933,14 +940,14 @@ void calculateVspeed(uint32_t time)
 		numberOfVSpeedSamples++;
 	}
 
-	int16_t thisVspeed = ((int16_t)thisAltitude - (int16_t)lastAltitude) / ((float)(time - lastRunTime)/60.);
+	int16_t thisVspeed = (int16_t)(((int16_t)thisAltitude - (int16_t)lastAltitude) / ((float)(time - lastRunTime)/60.));
 	vSpeedInstant[numberOfVSpeedSamples-1] = thisVspeed;
-	int16_t vSpeedAdder=0;
+	int32_t vSpeedAdder=0;
 	for(int i = 0; i < numberOfVSpeedSamples; i++)
 	{
 		vSpeedAdder += vSpeedInstant[i];
 	}
-	vSpeedAvg = vSpeedAdder / (int16_t)numberOfVSpeedSamples;
+	vSpeedAvg = (int16_t)(vSpeedAdder / (int32_t)numberOfVSpeedSamples);
 
 	lastRunTime = time;
 	lastAltitude = thisAltitude;
@@ -948,7 +955,7 @@ void calculateVspeed(uint32_t time)
 
 
 
-	scheduleQueueAdd(&calculateVspeed, time);
+	scheduleQueueAdd(&calculateVspeed, time+1);
 }
 
 void timedCutdown(uint32_t time)

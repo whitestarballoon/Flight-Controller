@@ -24,6 +24,8 @@
 
 #include "gps.h"
 
+//#define DISABLE_ERROR_CHECKING_THIS_IS_BAD
+
 //$GPRMC,040302.663,A,3939.7,N,10506.6,W,0.27,358.86,200804,,*1A
 //^Sentence             ^Lat(HHMM.M)      ^Speed (Knots)
 //         ^HHMMSS.XXX          ^Lon(HHHMM.M)   ^Bearing
@@ -52,7 +54,11 @@ void getGPS(struct gpsData *outputData)
 		while(((tempChar = (char)uart_getchar()) != '\n') && (i < 99) && tempChar!= 0xff)
 		{
 			lineBuff[i] = tempChar;
+			#ifndef DISABLE_ERROR_CHECKING_THIS_IS_BAD
 			i++;
+			#else
+			wdt_reset();
+			#endif
 		}
 		lineBuff[i] = '\0';
 		errorTracker++;
@@ -146,7 +152,11 @@ void getGPS(struct gpsData *outputData)
 		while(((tempChar = (char)uart_getchar()) != '\n') && i < 99)
 		{
 			lineBuff[i] = tempChar;
+			#ifndef DISABLE_ERROR_CHECKING_THIS_IS_BAD
 			i++;
+			#else
+			wdt_reset();
+			#endif
 		}
 		errorTracker++;
 		wdt_reset();
@@ -208,7 +218,11 @@ void getGPS(struct gpsData *outputData)
 		while(((tempChar = (char)uart_getchar()) != '\n') && (i < 99) && tempChar!= 0xff)
 		{
 			lineBuff[i] = tempChar;
+			#ifndef DISABLE_ERROR_CHECKING_THIS_IS_BAD
 			i++;
+			#else
+			wdt_reset();
+			#endif
 		}
 		lineBuff[i] = '\0';
 		errorTracker++;
