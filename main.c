@@ -926,19 +926,21 @@ void calculateVspeed(uint32_t time)
 		for(int i=1; i <= VSPEEDSAMPLESDESIRED; i++)
 		{
 			vSpeedInstant[i-1] = vSpeedInstant[i];
+			//lprintf_P("V%d: %d\n", i, vSpeedInstant[i]);
+			//wdt_reset();
 		}
 	} else {
 		numberOfVSpeedSamples++;
 	}
 
-	int16_t thisVspeed = (thisAltitude - lastAltitude) / ((float)(time - lastRunTime)/60.);
+	int16_t thisVspeed = ((int16_t)thisAltitude - (int16_t)lastAltitude) / ((float)(time - lastRunTime)/60.);
 	vSpeedInstant[numberOfVSpeedSamples-1] = thisVspeed;
 	int16_t vSpeedAdder=0;
 	for(int i = 0; i < numberOfVSpeedSamples; i++)
 	{
 		vSpeedAdder += vSpeedInstant[i];
 	}
-	vSpeedAvg = vSpeedAdder / (int8_t)numberOfVSpeedSamples;
+	vSpeedAvg = vSpeedAdder / (int16_t)numberOfVSpeedSamples;
 
 	lastRunTime = time;
 	lastAltitude = thisAltitude;
@@ -946,7 +948,7 @@ void calculateVspeed(uint32_t time)
 
 
 
-	scheduleQueueAdd(&calculateVspeed, time+5);
+	scheduleQueueAdd(&calculateVspeed, time);
 }
 
 void timedCutdown(uint32_t time)
