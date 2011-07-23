@@ -81,7 +81,8 @@
 
 #define GSPDEBUG
 #define FCPUDEBUG
-#define MAKERFAIRE_GPS_DEBUG
+//#define MAKERFAIRE_GPS_DEBUG
+#define MAKERFAIRE_DEMO_NOTX
 //#define OSHITDISABLE
 
 #define CRITCOMFAIL 25
@@ -264,6 +265,7 @@ int main (void)
     	wdt_disable();
     	debugPrintRawStrings();
     }
+    #endif
 
 	uint32_t rnow = now();
 	scheduleQueueAdd(&resetWatchdog, rnow);
@@ -271,8 +273,10 @@ int main (void)
 	scheduleQueueAdd(&processMonitor, rnow);
 	scheduleQueueAdd(&calculateVspeed, rnow);
 	scheduleQueueAdd(&collectData, rnow);
+	#ifndef MAKERFAIRE_DEMO_NOTX
 	scheduleQueueAdd(&transmitSamples, rnow);
 	scheduleQueueAdd(&transmitShortReport, rnow+20);  //Special case to give the comm controller a chance
+	#endif
 	scheduleQueueAdd(&ballastStaticTickle, rnow);
 	scheduleQueueAdd(&autoBallast, rnow);
 	scheduleQueueAdd(&flightPhaseLogic, rnow);
@@ -891,9 +895,9 @@ void processMonitor(uint32_t time)
     //Code for Makerfaire Demo
     lprintf_P(PSTR("***  Makerfaire Demo Info: "));
     //altitude
-    lprintf_P(PSTR(" Altitude: %ld "), currentPositionData.altitude);
+    lprintf_P(PSTR(" Altitude: %u "), currentPositionData.altitude);
     //vspeed
-    lprintf_P(PSTR("VSpeed: %ld "), (int16_t)vSpeedAvg);
+    lprintf_P(PSTR("VSpeed: %d "), vSpeedAvg);
     //babysitting?
     if(ballastBabySit)
     {
@@ -905,14 +909,14 @@ void processMonitor(uint32_t time)
     }
     lprintf_P(PSTR("  ***\n"));
 
-	scheduleQueueAdd(&processMonitor, time+5);
+	scheduleQueueAdd(&processMonitor, time+1);
 
 }
 
 //Calculate Running Avg. of Vertical Speed
 
 //THIS IS DEFINED IN EEPROMVARS.H, GOD THIS IS STUPID
-#define VSPEEDSAMPLESDESIRED 20
+#define VSPEEDSAMPLESDESIRED 10
 
 
 void calculateVspeed(uint32_t time)
@@ -940,8 +944,10 @@ void calculateVspeed(uint32_t time)
 		numberOfVSpeedSamples++;
 	}
 
-	int16_t thisVspeed = (int16_t)(((int16_t)thisAltitude - (int16_t)lastAltitude) / ((float)(time - lastRunTime)/60.));
+	//int16_t thisVspeed = (int16_t)((thisAltitude - lastAltitude) / ((float)(time - lastRunTime)/60.));
+	int16_t thisVspeed = 30*(thisAltitude - lastAltitude);
 	vSpeedInstant[numberOfVSpeedSamples-1] = thisVspeed;
+	lprintf_P(PSTR("This Vspeed: %d\n"), thisVspeed);
 	int32_t vSpeedAdder=0;
 	for(int i = 0; i < numberOfVSpeedSamples; i++)
 	{
