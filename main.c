@@ -833,7 +833,7 @@ void processMonitor(uint32_t time)
 		gpsFailures = CRITGPSFAIL + 1;
 		currentPositionData.altitude = 0;
 		vSpeedAvg = 0;
-		eeprom_write_byte(&EEautoBallastDisable, 1);
+		//eeprom_write_byte(&EEautoBallastDisable, 1);
 	}
 
 	//get battetry temp
@@ -1006,7 +1006,7 @@ void autoBallast(uint32_t time)
 		if(vSpeedAvg > (currentTargetVspeed + babySitVertSpeed)/2)
 		{
 			#ifdef FCPUDEBUG
-				//lprintf_P(PSTR("Babysit: 1/2 T\n"));
+				lprintf_P(PSTR("Babysit: 1/2 T\n"));
 			#endif
 			//Close ballast
 			//Send i2c address 0x09, 0d18
@@ -1020,19 +1020,19 @@ void autoBallast(uint32_t time)
 			if(errorTolerance >= CRITCOMFAIL)
 			{
 				#ifdef FCPUDEBUG
-					//lprintf_P(PSTR("Blst Error\n"));
+					lprintf_P(PSTR("Blst Error\n"));
 				#endif
 				statusCode = (statusCode & 0xFFFD) | (1 << 1);
 			} else {
 				statusCode = (statusCode & 0xFFFD);
 			}
-			scheduleQueueAdd(&autoBallast, time+60);
+			scheduleQueueAdd(&autoBallast, time+15);
 			ballastBabySit = 0;
 		} else {
 			#ifdef FCPUDEBUG
-				//lprintf_P(PSTR("Babysit: Waiting\n"));
+				lprintf_P(PSTR("Babysit: Waiting\n"));
 			#endif
-			scheduleQueueAdd(&autoBallast, time+10);
+			scheduleQueueAdd(&autoBallast, time+5);
 		}
 	} else {
 
@@ -1041,7 +1041,7 @@ void autoBallast(uint32_t time)
 		#endif
 
 		//If we're above the safety threshold
-		if(ballastSafety < thisAltitude && ballastDisabled != 1)
+		if(ballastDisabled != 1)
 		{
 
 
@@ -1051,25 +1051,25 @@ void autoBallast(uint32_t time)
 				//use negative target velocity
 			//else if current altitude is below target altitude AND vertical velocity is below target
 				//use zero target
-			if(thisAltitude <= targetAltitude && vSpeedAvg > currentTargetVspeed)
+			if(thisAltitude <= targetAltitude)
 			{
 				#ifdef FCPUDEBUG
-					//lprintf_P(PSTR("Ballast: TVSpeed+\n"));
+					lprintf_P(PSTR("Ballast: TVSpeed+\n"));
 				#endif
 				currentTargetVspeed = eeprom_read_word(&EEballastTargetPositiveVSpeed);
 			} else if(thisAltitude > targetAltitude)
 			{
 				#ifdef FCPUDEBUG
-					//lprintf_P(PSTR("Ballast: TVSpeed-\n"));
+					lprintf_P(PSTR("Ballast: TVSpeed-\n"));
 				#endif
 				currentTargetVspeed = eeprom_read_word(&EEballastTargetNegativeVSpeed);
-			} else if(thisAltitude < targetAltitude && vSpeedAvg < currentTargetVspeed)
+			} /*else if(thisAltitude < targetAltitude && vSpeedAvg < currentTargetVspeed)
 			{
 				#ifdef FCPUDEBUG
-					//lprintf_P(PSTR("Ballast: TVSpeed0\n"));
+					lprintf_P(PSTR("Ballast: TVSpeed0\n"));
 				#endif
 				currentTargetVspeed = 0;
-			}
+			}*/
 
 			//if vertical velocity is below target
 			//save VV
@@ -1098,9 +1098,9 @@ void autoBallast(uint32_t time)
 				} else {
 					statusCode = (statusCode & 0xFFFD);
 				}
-				scheduleQueueAdd(&autoBallast, time+10);
+				scheduleQueueAdd(&autoBallast, time+5);
 			} else {
-				scheduleQueueAdd(&autoBallast, time+60);
+				scheduleQueueAdd(&autoBallast, time+15);
 			}
 		} else {
 
@@ -1123,7 +1123,7 @@ void autoBallast(uint32_t time)
 			} else {
 				statusCode = (statusCode & 0xFFFD);
 			}
-			scheduleQueueAdd(&autoBallast, time+60);
+			scheduleQueueAdd(&autoBallast, time+15);
 		}
 	}
 
