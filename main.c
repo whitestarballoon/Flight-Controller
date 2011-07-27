@@ -107,6 +107,9 @@ void dumpTemps(void);
 void debugBallast(void);
 void dumpGPS(void);
 
+enum makerfaireMode { positive, negative };
+makerfaireMode globalMode;
+
 //DEFINE SCHEDULED THINGS
 void rapidHFXmit(uint32_t);
 void timedCutdown(uint32_t);
@@ -277,7 +280,7 @@ int main (void)
 	scheduleQueueAdd(&transmitSamples, rnow);
 	scheduleQueueAdd(&transmitShortReport, rnow+20);  //Special case to give the comm controller a chance
 	#endif
-	scheduleQueueAdd(&ballastStaticTickle, rnow);
+	//scheduleQueueAdd(&ballastStaticTickle, rnow);
 	scheduleQueueAdd(&autoBallast, rnow);
 	scheduleQueueAdd(&flightPhaseLogic, rnow);
 
@@ -901,11 +904,17 @@ void processMonitor(uint32_t time)
     //babysitting?
     if(ballastBabySit)
     {
-    	lprintf_P(PSTR("BabySitting? Yes"));
+    	lprintf_P(PSTR("BabySitting? Yes,"));
     }
     else
     {
-    	lprintf_P(PSTR("BabySitting? No")); 
+    	lprintf_P(PSTR("BabySitting? No,")); 
+    }
+    if(globalMode == positive)
+    {
+    	lprintf_P(PSTR(" Going Up!"));
+    } else {
+    	lprintf_P(PSTR(" Going Down!"));
     }
     lprintf_P(PSTR("  ***\n"));
 
@@ -1056,12 +1065,14 @@ void autoBallast(uint32_t time)
 				#ifdef FCPUDEBUG
 					lprintf_P(PSTR("Ballast: TVSpeed+\n"));
 				#endif
+				globalMode = positive;
 				currentTargetVspeed = eeprom_read_word(&EEballastTargetPositiveVSpeed);
 			} else if(thisAltitude > targetAltitude)
 			{
 				#ifdef FCPUDEBUG
 					lprintf_P(PSTR("Ballast: TVSpeed-\n"));
 				#endif
+				globalMode = negative;
 				currentTargetVspeed = eeprom_read_word(&EEballastTargetNegativeVSpeed);
 			} /*else if(thisAltitude < targetAltitude && vSpeedAvg < currentTargetVspeed)
 			{
