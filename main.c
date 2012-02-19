@@ -126,7 +126,7 @@ void incrementEpoch(uint32_t);
 void updateSpeedDial(uint16_t speedDial);
 
 //Vspeed Calculation Variables
-int16_t vSpeedAvg;
+int16_t vSpeedAvg = 0;
 uint8_t numberOfVSpeedSamples=0;
 uint16_t lastAltitude=0;
 uint16_t lastRunTime=0;
@@ -202,13 +202,11 @@ int main (void)
 	_delay_ms(500);
 
 	lprintf("WSB CPU Alive\n");
-    wdt_enable(WDTO_8S);
-
-
+    
     #ifdef FCPUDEBUG
 		lprintf_P(PSTR("Set Epoch\n"));
 	#endif
-
+	wdt_enable(WDTO_8S);
 	if(eeprom_read_byte(&EEEpochLock) == 0)
 	{
 		eeprom_write_dword(&EEepochOffset, 0);
@@ -769,7 +767,7 @@ void dumpVarsToGSP(void)
 
 struct gpsData currentPositionData;
 uint8_t gpsFailures = 0;
-
+uint8_t ballastBabySit =0;
 void processMonitor(uint32_t time)
 {
 	#ifdef FCPUDEBUG
@@ -818,7 +816,7 @@ void processMonitor(uint32_t time)
 		gpsFailures = CRITGPSFAIL + 1;
 		currentPositionData.altitude = 0;
 		vSpeedAvg = 0;
-		eeprom_write_byte(&EEautoBallastDisable, 1);
+		//eeprom_write_byte(&EEautoBallastDisable, 1);
 	}
 
 	//get battetry temp
@@ -911,14 +909,16 @@ void calculateVspeed(uint32_t time)
 		numberOfVSpeedSamples++;
 	}
 
-	int16_t thisVspeed = (thisAltitude - lastAltitude) / ((float)(time - lastRunTime)/60.);
+	//int16_t thisVspeed = (int16_t)((thisAltitude - lastAltitude) / ((float)(time - lastRunTime)/60.));
+	int16_t thisVspeed = 30*(thisAltitude - lastAltitude);
 	vSpeedInstant[numberOfVSpeedSamples-1] = thisVspeed;
-	int16_t vSpeedAdder=0;
+	lprintf_P(PSTR("This Vspeed: %d\n"), thisVspeed);
+	int32_t vSpeedAdder=0;
 	for(int i = 0; i < numberOfVSpeedSamples; i++)
 	{
 		vSpeedAdder += vSpeedInstant[i];
 	}
-	vSpeedAvg = vSpeedAdder / (int8_t)numberOfVSpeedSamples;
+	vSpeedAvg = (int16_t)(vSpeedAdder / (int32_t)numberOfVSpeedSamples);
 
 	lastRunTime = time;
 	lastAltitude = thisAltitude;
@@ -944,7 +944,7 @@ void timedCutdown(uint32_t time)
 	//In response, will  I receive the Cutdown Now command?
 }
 
-uint8_t ballastBabySit;
+
 int16_t babySitVertSpeed;
 int16_t currentTargetVspeed;
 uint32_t lastBallastTime;
@@ -1006,7 +1006,7 @@ void autoBallast(uint32_t time)
 		#endif
 
 		//If we're above the safety threshold
-		if(ballastSafety < thisAltitude && ballastDisabled != 1)
+		if(ballastDisabled != 1)
 		{
 
 
@@ -1016,7 +1016,7 @@ void autoBallast(uint32_t time)
 				//use negative target velocity
 			//else if current altitude is below target altitude AND vertical velocity is below target
 				//use zero target
-			if(thisAltitude <= targetAltitude && vSpeedAvg > currentTargetVspeed)
+			if(thisAltitude <= targetAltitude)
 			{
 				#ifdef FCPUDEBUG
 					//lprintf_P(PSTR("Ballast: TVSpeed+\n"));
@@ -1028,13 +1028,13 @@ void autoBallast(uint32_t time)
 					//lprintf_P(PSTR("Ballast: TVSpeed-\n"));
 				#endif
 				currentTargetVspeed = eeprom_read_word(&EEballastTargetNegativeVSpeed);
-			} else if(thisAltitude < targetAltitude && vSpeedAvg < currentTargetVspeed)
+			} /*else if(thisAltitude < targetAltitude && vSpeedAvg < currentTargetVspeed)
 			{
 				#ifdef FCPUDEBUG
 					//lprintf_P(PSTR("Ballast: TVSpeed0\n"));
 				#endif
 				currentTargetVspeed = 0;
-			}
+			}*/
 
 			//if vertical velocity is below target
 			//save VV
