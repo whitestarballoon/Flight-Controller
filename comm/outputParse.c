@@ -141,7 +141,7 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
         //lprintf("P: %lx\n", reversedBitmask[0]);
         //lprintf("P: %lx\n", reversedBitmask[1]);
         //lprintf("P: %lx\n", reversedBitmask[2]);
-		if(reversedBitmask[currentTelemetryChannel/32] & 1 == 1)
+		if((reversedBitmask[currentTelemetryChannel/32] & 1) == 1)
 		{
 			//lprintf("Tof: %d\n", pgm_read_byte(&bitmaskTypeOrder[currentTelemetryChannel]));
 			//lprintf("Tok: %s\n", token);
@@ -151,7 +151,7 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 				uint32_t holder32;
 				float holderf;
 				case 8:
-					sscanf(token, "%d", &output[bytesWritten]);
+					sscanf(token, "%d", (int *)&output[bytesWritten]);
 					bytesWritten+=1;
 					break;
 				case 16:

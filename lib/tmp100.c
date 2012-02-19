@@ -22,7 +22,7 @@
 
 uint16_t tmp100rawTemp(uint8_t address)
 {
-	uint16_t error;
+	uint16_t error = 0;
 
 	i2cDisableInt();
 
@@ -94,7 +94,7 @@ uint8_t getTMP100config(uint8_t address)
 
 uint8_t setTMP100config(uint8_t address, uint8_t data)
 {
-	uint8_t error;
+	uint8_t error = 0;
 	i2cDisableInt();
 	i2cSendStart();
 	error |= i2cWaitForComplete();
@@ -118,7 +118,7 @@ uint8_t setTMP100config(uint8_t address, uint8_t data)
 uint8_t setTMP101Thermo(uint8_t address, uint8_t data, uint8_t tHigh)
 {
 
-	uint8_t error;
+	uint8_t error = 0;
 	i2cDisableInt();
 	i2cSendStart();
 	error |= i2cWaitForComplete();

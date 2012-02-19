@@ -340,9 +340,9 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			//if(receiveDataLength == 3)
 			{
 				int16_t holder = ((uint16_t)recieveData[1]<<8) + recieveData[2];
-				eeprom_write_word(&EEballastTargetPositiveVSpeed, holder);
+				eeprom_write_word((uint16_t *)&EEballastTargetPositiveVSpeed, holder);
 			}
-			break;
+		break;
 		case 0x03:
 			//set Over Ocean Flag
 			//if(receiveDataLength == 2)
@@ -362,7 +362,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			//set Night Temperature Forecast
 			//if(receiveDataLength == 2)
 			{
-				eeprom_write_byte(&EEnightTemperatureForecast, recieveData[1]);
+				eeprom_write_byte((uint8_t *)&EEnightTemperatureForecast, recieveData[1]);
 			}
 			break;
 		case 0x06:
@@ -417,9 +417,9 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			//if(receiveDataLength == 2)
 			{
 				uint8_t error;
-				eeprom_write_byte(&EEbatteryHeaterSetpoint, recieveData[1]);
-				error |= setTMP101Thermo(TMP101BH, set12bit2scomp(eeprom_read_byte(&EEbatteryHeaterSetpoint))*16, 0);
-				error |= setTMP101Thermo(TMP101BH, set12bit2scomp(eeprom_read_byte(&EEbatteryHeaterSetpoint))*16+32, 1);
+				eeprom_write_byte((uint8_t *)&EEbatteryHeaterSetpoint, recieveData[1]);
+				error |= setTMP101Thermo(TMP101BH, set12bit2scomp(eeprom_read_byte((uint8_t *)&EEbatteryHeaterSetpoint))*16, 0);
+				error |= setTMP101Thermo(TMP101BH, set12bit2scomp(eeprom_read_byte((uint8_t *)&EEbatteryHeaterSetpoint))*16+32, 1);
 				#ifdef GSPDEBUG
 					if(error != 0)
 					{
@@ -497,7 +497,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			//if(receiveDataLength == 3)
 			{
 				uint16_t holder = ((uint16_t)recieveData[1] << 8) + recieveData[2];
-				eeprom_write_word(&EEmaydayVSpeed, holder);
+				eeprom_write_word((uint16_t *)&EEmaydayVSpeed, holder);
 			}
 			break;
 		case 0x15:
@@ -519,7 +519,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 			//if(receiveDataLength == 3)
 			{
 				int16_t holder = ((uint16_t)recieveData[1]<<8) + recieveData[2];
-				eeprom_write_word(&EEballastTargetNegativeVSpeed, holder);
+				eeprom_write_word((uint16_t *)&EEballastTargetNegativeVSpeed, holder);
 			}
 			break;
 		case 0x19:
@@ -708,15 +708,15 @@ void dumpVarsToGSP(void)
 	_delay_ms(500);
 
 	lprintf_P(PSTR("ballastTrgtAlt: %u"), eeprom_read_word(&EEballastTargetAltitude));
-	lprintf_P(PSTR("ballastTrgt +Vspd: %d"), eeprom_read_word(&EEballastTargetPositiveVSpeed));
-	lprintf_P(PSTR("ballastTrgt -Vspd: %d"), eeprom_read_word(&EEballastTargetNegativeVSpeed));
+	lprintf_P(PSTR("ballastTrgt +Vspd: %d"), eeprom_read_word((uint16_t *)&EEballastTargetPositiveVSpeed));
+	lprintf_P(PSTR("ballastTrgt -Vspd: %d"), eeprom_read_word((uint16_t *)&EEballastTargetNegativeVSpeed));
 
 	lprintf_P(PSTR("maydayAlt: %ud"), eeprom_read_word(&EEmaydayAltitude));
-	lprintf_P(PSTR("maydayVSpd: %d"), eeprom_read_word(&EEmaydayVSpeed));
+	lprintf_P(PSTR("maydayVSpd: %d"), eeprom_read_word((uint16_t *)&EEmaydayVSpeed));
 	_delay_ms(500);
 
 	lprintf_P(PSTR("ballastSftyAlt: %u"), eeprom_read_word(&EEballastSafetyAltThresh));
-	uint8_t variable = (volatile)eeprom_read_byte(&EEautoBallastDisable);
+	uint8_t variable = (volatile int)eeprom_read_byte(&EEautoBallastDisable);
 	lprintf_P(PSTR("autoBallast dsbled?: %d"), variable);
 
 	//lprintf_P(PSTR("overOcean? %d"), eeprom_read_byte(&EEoverOceanFlag));
@@ -727,7 +727,7 @@ void dumpVarsToGSP(void)
 
 	lprintf_P(PSTR("maxAllowedTXInterval: %u"), eeprom_read_word(&EEmaxAllowableTXInterval));
 
-	lprintf_P(PSTR("batteryHeaterSet: %d"), eeprom_read_byte(&EEbatteryHeaterSetpoint));
+	lprintf_P(PSTR("batteryHeaterSet: %d"), eeprom_read_byte((uint8_t *)&EEbatteryHeaterSetpoint));
 
 	lprintf_P(PSTR("dataSampleInterval: %u"), eeprom_read_word(&EEdataCollectionInterval));
 	lprintf_P(PSTR("batchTXInterval: %u"), eeprom_read_word(&EEdataTransmitInterval));
@@ -785,7 +785,7 @@ void processMonitor(uint32_t time)
     {
         scheduleQueueAdd(&turnHfOn, time);
         scheduleQueueAdd(&turnHfOff, time+hfLengthToTx);
-        eeprom_write_word(&EEhfTimeToTx, time+eeprom_read_byte(&EEhfDataTransmitInterval));
+        eeprom_write_word(&EEhfTimeToTx, time+eeprom_read_byte((uint8_t *)&EEhfDataTransmitInterval));
     }
 
 	getGPS(&currentPositionData);
@@ -826,10 +826,10 @@ void processMonitor(uint32_t time)
 	//conver to 8 bit
 
 	//If battery temp is below setpoint, turn on telemetry channel
-	int8_t batterySetpoint = eeprom_read_byte(&EEbatteryHeaterSetpoint);;
+	int8_t batterySetpoint = eeprom_read_byte((uint8_t *)&EEbatteryHeaterSetpoint);;
 	if(batteryTemperature < batterySetpoint)
 	{
-		currentBitmask[0] |= (uint32_t)(1<<24);
+		currentBitmask[0] |= ((uint32_t)(1UL<<24UL));
 	}
 
 	//GET RAW PACK VOLTAGE, If below Nominal, transmit
@@ -1021,13 +1021,13 @@ void autoBallast(uint32_t time)
 				#ifdef FCPUDEBUG
 					//lprintf_P(PSTR("Ballast: TVSpeed+"));
 				#endif
-				currentTargetVspeed = eeprom_read_word(&EEballastTargetPositiveVSpeed);
+				currentTargetVspeed = eeprom_read_word((uint16_t *)&EEballastTargetPositiveVSpeed);
 			} else if(thisAltitude > targetAltitude)
 			{
 				#ifdef FCPUDEBUG
 					//lprintf_P(PSTR("Ballast: TVSpeed-"));
 				#endif
-				currentTargetVspeed = eeprom_read_word(&EEballastTargetNegativeVSpeed);
+				currentTargetVspeed = eeprom_read_word((uint16_t *)&EEballastTargetNegativeVSpeed);
 			} /*else if(thisAltitude < targetAltitude && vSpeedAvg < currentTargetVspeed)
 			{
 				#ifdef FCPUDEBUG
@@ -1100,7 +1100,7 @@ void collectData(uint32_t time)
 	#ifdef FCPUDEBUG
 		lprintf_P(PSTR("In Data Collect"));
 	#endif
-	char sampleString[SAMPLESTRINGSIZEINCHARS];
+	char sampleString[SAMPLESTRINGSIZEINCHARS+1];
 	memset(sampleString, 0x00, SAMPLESTRINGSIZEINCHARS);
 	//get time
 	uint32_t epochNow = now();
@@ -1602,14 +1602,14 @@ void flightPhaseLogic(uint32_t time)
 	uint16_t thisAltitude = myGPS.altitude;
 
 	uint16_t maydayAltitude = eeprom_read_word(&EEmaydayAltitude);
-	int16_t maydayVSpeed = eeprom_read_word(&EEmaydayVSpeed);
+	int16_t maydayVSpeed = eeprom_read_word((uint16_t *)&EEmaydayVSpeed);
 	uint8_t myPhase = currentPhase & 0x0F;
 	uint8_t myFlags = currentPhase >> 4;
 	switch(myPhase)
 	{
 
 		case 0:
-			if(((PIND & _BV(TAKEOFFPIN))>>TAKEOFFPIN == 1) && (myFlags & 1 == 1))
+			if(((PIND & _BV(TAKEOFFPIN))>>TAKEOFFPIN == 1) && ((myFlags & 1) == 1))
 			{
 				#ifdef FCPUDEBUG
 					_delay_ms(500);
@@ -1640,7 +1640,7 @@ void flightPhaseLogic(uint32_t time)
 
 
 			//reschedule 1 minute from now
-			if((myGPS.altitude > 8500) && (vSpeedAvg < 0) && (myFlags & 1 == 1) || (cutdownStatus == 1))
+			if(((myGPS.altitude > 8500) && (vSpeedAvg < 0) && ((myFlags & 1) == 1)) || (cutdownStatus == 1))
 			{
 				myPhase = 2;
 			}
@@ -1653,7 +1653,7 @@ void flightPhaseLogic(uint32_t time)
 			//disable rapid hf xmit
 			rapidHFEnable = 0;
 			//make sure sat is enabled in here! BEFORE FLIGHT
-			if((vSpeedAvg < maydayVSpeed) || (thisAltitude < maydayAltitude)  || (cutdownStatus == 1) && (myFlags & 1 == 1))
+			if(((vSpeedAvg < maydayVSpeed) || (thisAltitude < maydayAltitude)  || (cutdownStatus == 1)) && ((myFlags & 1) == 1))
 			{
 			    #ifdef FCPUDEBUG
                     lprintf_P(PSTR("Phase 3 Criteria"));
@@ -1674,7 +1674,7 @@ void flightPhaseLogic(uint32_t time)
 				scheduleQueueAdd(&rapidHFXmit, time);
 			}
 			rapidHFEnable = 1;
-			if((vSpeedAvg > maydayVSpeed) && (thisAltitude > maydayAltitude) && (cutdownStatus == 0) && (myFlags & 1 == 1))
+			if((vSpeedAvg > maydayVSpeed) && (thisAltitude > maydayAltitude) && (cutdownStatus == 0) && ((myFlags & 1) == 1))
 			{
 					myPhase = 2;
 			}

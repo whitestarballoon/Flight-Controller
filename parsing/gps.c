@@ -77,7 +77,7 @@ void getGPS(struct gpsData *outputData)
 	targetChecksum[0] = lineBuff[i-3];
 	targetChecksum[1] = lineBuff[i-2];
 	targetChecksum[2] = '\0';
-	sscanf(targetChecksum, "%x", &tSum);
+	sscanf(targetChecksum, "%x", (unsigned int *)&tSum);
 	for(uint8_t j = 1; j < i-4; j++)
 	{
 		 checksum = checksum ^ lineBuff[j];
@@ -164,7 +164,7 @@ void getGPS(struct gpsData *outputData)
 	targetChecksum[0] = lineBuff[i-3];
 	targetChecksum[1] = lineBuff[i-2];
 	targetChecksum[2] = '\0';
-	sscanf(targetChecksum, "%x", &tSum);
+	sscanf(targetChecksum, "%x", (unsigned int *)&tSum);
 	for(uint8_t j = 1; j < i-4; j++)
 	{
 		 checksum = checksum ^ lineBuff[j];
@@ -180,7 +180,9 @@ void getGPS(struct gpsData *outputData)
 	float tempVdop, tempHdop;
 	// Start GPGSA Parse Section
 
-	char *token, *lastToken, *beforeThat;
+	char *token = 0;
+	char *lastToken = 0;
+	char *beforeThat = 0;
 	token = strtok(lineBuff, ",");
 	while(token != NULL)
 	{
@@ -226,7 +228,7 @@ void getGPS(struct gpsData *outputData)
 	targetChecksum[0] = lineBuff[i-3];
 	targetChecksum[1] = lineBuff[i-2];
 	targetChecksum[2] = '\0';
-	sscanf(targetChecksum, "%x", &tSum);
+	sscanf(targetChecksum, "%x", (unsigned int *)&tSum);
 	for(uint8_t j = 1; j < i-4; j++)
 	{
 		 checksum = checksum ^ lineBuff[j];
@@ -244,7 +246,7 @@ void getGPS(struct gpsData *outputData)
 
 	sscanf( lineBuff,
 			"$GPGGA,%*f,%*f,%*c,%*f,%*c,%*d,%d,%*f,%f",
-			&outputData->numberOfSats, &altitude );
+			(int *)&outputData->numberOfSats, &altitude );
 
 	outputData->altitude = (uint16_t)altitude;
 	// End GPGGA Parse Section
@@ -295,7 +297,7 @@ void debugPrintRawStrings(void)
 	targetChecksum[0] = lineBuff[i-3];
 	targetChecksum[1] = lineBuff[i-2];
 	targetChecksum[2] = '\0';
-	sscanf(targetChecksum, "%x", &tSum);
+	sscanf(targetChecksum, "%x", (unsigned int *)&tSum);
 	for(uint8_t j = 1; j < i-4; j++)
 	{
 		 checksum = checksum ^ lineBuff[j];
@@ -331,7 +333,7 @@ void debugPrintRawStrings(void)
 	targetChecksum[0] = lineBuff[i-3];
 	targetChecksum[1] = lineBuff[i-2];
 	targetChecksum[2] = '\0';
-	sscanf(targetChecksum, "%x", &tSum);
+	sscanf(targetChecksum, "%x", (unsigned int *)&tSum);
 	for(uint8_t j = 1; j < i-4; j++)
 	{
 		 checksum = checksum ^ lineBuff[j];
@@ -366,7 +368,7 @@ void debugPrintRawStrings(void)
 	targetChecksum[0] = lineBuff[i-3];
 	targetChecksum[1] = lineBuff[i-2];
 	targetChecksum[2] = '\0';
-	sscanf(targetChecksum, "%x", &tSum);
+	sscanf(targetChecksum, "%x", (unsigned int *)&tSum);
 	for(uint8_t j = 1; j < i-4; j++)
 	{
 		 checksum = checksum ^ lineBuff[j];

@@ -27,32 +27,32 @@
 #include "bmp085.h"
 
 //Needed for BMP085
-extern short EEMEM EEBMPac1;
-extern short EEMEM EEBMPac2;
-extern short EEMEM EEBMPac3;
-extern unsigned short EEMEM EEBMPac4;
-extern unsigned short EEMEM EEBMPac5;
-extern unsigned short EEMEM EEBMPac6;
-extern short EEMEM EEBMPb1;
-extern short EEMEM EEBMPb2;
-extern short EEMEM EEBMPmb;
-extern short EEMEM EEBMPmc;
-extern short EEMEM EEBMPmd;
+extern int16_t EEMEM EEBMPac1;
+extern int16_t EEMEM EEBMPac2;
+extern int16_t EEMEM EEBMPac3;
+extern uint16_t EEMEM EEBMPac4;
+extern uint16_t EEMEM EEBMPac5;
+extern uint16_t EEMEM EEBMPac6;
+extern int16_t EEMEM EEBMPb1;
+extern int16_t EEMEM EEBMPb2;
+extern int16_t EEMEM EEBMPmb;
+extern int16_t EEMEM EEBMPmc;
+extern int16_t EEMEM EEBMPmd;
 
 void BMP085_Calibration(void)
 {
 
-	eeprom_write_word(&EEBMPac1, bmp085ReadShort(0xAA));
-	eeprom_write_word(&EEBMPac2, bmp085ReadShort(0xAC));
-	eeprom_write_word(&EEBMPac3, bmp085ReadShort(0xAE));
-	eeprom_write_word(&EEBMPac4, bmp085ReadShort(0xB0));
-	eeprom_write_word(&EEBMPac5, bmp085ReadShort(0xB2));
-	eeprom_write_word(&EEBMPac6, bmp085ReadShort(0xB4));
-	eeprom_write_word(&EEBMPb1, bmp085ReadShort(0xB6));
-	eeprom_write_word(&EEBMPb2, bmp085ReadShort(0xB8));
-	eeprom_write_word(&EEBMPmb, bmp085ReadShort(0xBA));
-	eeprom_write_word(&EEBMPmc, bmp085ReadShort(0xBC));
-	eeprom_write_word(&EEBMPmd, bmp085ReadShort(0xBE));
+	eeprom_write_word((uint16_t *)&EEBMPac1, bmp085ReadShort(0xAA));
+	eeprom_write_word((uint16_t *)&EEBMPac2, bmp085ReadShort(0xAC));
+	eeprom_write_word((uint16_t *)&EEBMPac3, bmp085ReadShort(0xAE));
+	eeprom_write_word((uint16_t *)&EEBMPac4, bmp085ReadShort(0xB0));
+	eeprom_write_word((uint16_t *)&EEBMPac5, bmp085ReadShort(0xB2));
+	eeprom_write_word((uint16_t *)&EEBMPac6, bmp085ReadShort(0xB4));
+	eeprom_write_word((uint16_t *)&EEBMPb1, bmp085ReadShort(0xB6));
+	eeprom_write_word((uint16_t *)&EEBMPb2, bmp085ReadShort(0xB8));
+	eeprom_write_word((uint16_t *)&EEBMPmb, bmp085ReadShort(0xBA));
+	eeprom_write_word((uint16_t *)&EEBMPmc, bmp085ReadShort(0xBC));
+	eeprom_write_word((uint16_t *)&EEBMPmd, bmp085ReadShort(0xBE));
 
 }
 
@@ -172,17 +172,17 @@ void bmp085Convert(long* temperature, long* pressure)
 	short md;
 	//End Globals
 
-	ac1 = eeprom_read_word(&EEBMPac1);
-	ac2 = eeprom_read_word(&EEBMPac2);
-	ac3 = eeprom_read_word(&EEBMPac3);
-	ac4 = eeprom_read_word(&EEBMPac4);
-	ac5 = eeprom_read_word(&EEBMPac5);
-	ac6 = eeprom_read_word(&EEBMPac6);
-	b1 = eeprom_read_word(&EEBMPb1);
-	b2 = eeprom_read_word(&EEBMPb2);
-	mb = eeprom_read_word(&EEBMPmb);
-	mc = eeprom_read_word(&EEBMPmc);
-	md = eeprom_read_word(&EEBMPmd);
+	ac1 = eeprom_read_word((uint16_t *)&EEBMPac1);
+	ac2 = eeprom_read_word((uint16_t *)&EEBMPac2);
+	ac3 = eeprom_read_word((uint16_t *)&EEBMPac3);
+	ac4 = eeprom_read_word((uint16_t *)&EEBMPac4);
+	ac5 = eeprom_read_word((uint16_t *)&EEBMPac5);
+	ac6 = eeprom_read_word((uint16_t *)&EEBMPac6);
+	b1 = eeprom_read_word((uint16_t *)&EEBMPb1);
+	b2 = eeprom_read_word((uint16_t *)&EEBMPb2);
+	mb = eeprom_read_word((uint16_t *)&EEBMPmb);
+	mc = eeprom_read_word((uint16_t *)&EEBMPmc);
+	md = eeprom_read_word((uint16_t *)&EEBMPmd);
 
 	//This code is modified from Sparkfun's Example code
 	unsigned long ut;

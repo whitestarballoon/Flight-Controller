@@ -39,7 +39,7 @@ eeprom_write_byte(&EEoverOceanFlag, 0);
 
 eeprom_write_word(&EEmaxAllowableTXInterval, 3600);
 
-eeprom_write_byte(&EEbatteryHeaterSetpoint, -20);
+eeprom_write_byte((uint8_t *)&EEbatteryHeaterSetpoint, -20);
 
 eeprom_write_word(&EEdataCollectionInterval, 60);
 eeprom_write_word(&EEdataTransmitInterval, 900);
@@ -66,11 +66,11 @@ eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
 eeprom_write_word(&EEcurrentTelemetryVersion, 0);
 
 eeprom_write_word(&EEballastTargetAltitude, 10000);
-eeprom_write_word(&EEballastTargetPositiveVSpeed, 5);
-eeprom_write_word(&EEballastTargetNegativeVSpeed, -5);
+eeprom_write_word((uint16_t *)&EEballastTargetPositiveVSpeed, 5);
+eeprom_write_word((uint16_t *)&EEballastTargetNegativeVSpeed, -5);
 
 eeprom_write_word(&EEmaydayAltitude, 1000);
-eeprom_write_word(&EEmaydayVSpeed, -100);
+eeprom_write_word((uint16_t *)&EEmaydayVSpeed, -100);
 
 eeprom_write_byte(&EEautoBallastDisable, 1);
 
