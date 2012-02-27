@@ -60,13 +60,13 @@ void getGPS(struct gpsData *outputData)
 	} while((strncmp("$GPRMC", lineBuff, 6) != 0) && errorTracker < 100);
 	// End GPRMC Acquisition Section
 
-	//lprintf("et: %d\n", errorTracker);
+	//lprintf("et: %d", errorTracker);
     wdt_reset();
 	//If something is wrong, return before we try to parse the data.
 	//Set the output status to "Loco".
 	if(errorTracker >= 100)
 	{
-	    lprintf_P(PSTR("ERR\n"));
+	    lprintf_P(PSTR("ERR"));
 		outputData->status  = 3;
 		return;
 	}
@@ -272,7 +272,7 @@ void debugPrintRawStrings(void)
 	//Needed so the first comparison works out correctly
 	memset(lineBuff, 0x00, 100);
 
-	lprintf_P(PSTR("In Ur GPS Debug\n"));
+	lprintf_P(PSTR("In Ur GPS Debug"));
 
 	do
 	{
@@ -301,7 +301,7 @@ void debugPrintRawStrings(void)
 		 checksum = checksum ^ lineBuff[j];
 	}
 
-	lprintf_P(PSTR("CS: %x TCS: %x\n"), checksum, tSum);
+	lprintf_P(PSTR("CS: %x TCS: %x"), checksum, tSum);
 
 	for(uint8_t j = 0; j < i; j++)
 	{
@@ -309,7 +309,7 @@ void debugPrintRawStrings(void)
 	}
 	if(tSum == checksum)
 	{
-		lprintf_P(PSTR("Checksum Valid\n"));
+		lprintf_P(PSTR("Checksum Valid"));
 	}
 
 	memset(lineBuff, 0x00, 100);
@@ -337,7 +337,7 @@ void debugPrintRawStrings(void)
 		 checksum = checksum ^ lineBuff[j];
 	}
 
-	lprintf_P(PSTR("CS: %x TCS: %x\n"), checksum, tSum);
+	lprintf_P(PSTR("CS: %x TCS: %x"), checksum, tSum);
 
 	for(uint8_t j = 0; j < i; j++)
 	{
@@ -345,7 +345,7 @@ void debugPrintRawStrings(void)
 	}
 	if(tSum == checksum)
 	{
-		lprintf_P(PSTR("Checksum Valid\n"));
+		lprintf_P(PSTR("Checksum Valid"));
 	}
 
 	memset(lineBuff, 0x00, 100);
@@ -372,7 +372,7 @@ void debugPrintRawStrings(void)
 		 checksum = checksum ^ lineBuff[j];
 	}
 
-	lprintf_P(PSTR("CS: %x TCS: %x\n"), checksum, tSum);
+	lprintf_P(PSTR("CS: %x TCS: %x"), checksum, tSum);
 
 	for(uint8_t j = 0; j < i; j++)
 	{
@@ -380,7 +380,7 @@ void debugPrintRawStrings(void)
 	}
 	if(tSum == checksum)
 	{
-		lprintf_P(PSTR("Checksum Valid\n"));
+		lprintf_P(PSTR("Checksum Valid"));
 	}
 
 }
