@@ -19,7 +19,7 @@
 
 #include "outputParse.h"
 
-#define opdebug
+//#define opdebug
 
 //if commented out, no eeprom writing
 #define detacheeprom
@@ -69,10 +69,7 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 	//Sample Retrieval words
 	#ifdef opdebug
 		lprintf("ISAMP: %d\n", sampleNumber);
-        for(int i = 0; i < SAMPLESTRINGSIZEINCHARS; i++)
-        {
-            lprintf("%c", sampleHolder[i]);
-        }
+        lprintf("%s", sampleHolder);
 		lprintf("\n");
 	#endif
 
@@ -214,12 +211,12 @@ void loadBatch(void)
 		sizeOfSample = getTxSample(thisSample, currentBitmask, i, batchNumber);
 
 		#ifdef opdebug
-			lprintf("A Sample: ");
+			//lprintf("A Sample: ");
 		#endif
 		for(int j=0; j < sizeOfSample; j++)
 		{
 			#ifdef opdebug
-				lprintf("%x ", thisSample[j]);
+				//lprintf("%x ", thisSample[j]);
 			#endif
 			uint8_t data[3];
 			uint8_t error;
@@ -234,7 +231,7 @@ void loadBatch(void)
 			commPromEnd++;
 		}
 		#ifdef opdebug
-			lprintf("\n");
+			//lprintf("\n");
 		#endif
 
 	}

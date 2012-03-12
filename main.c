@@ -30,6 +30,8 @@
 #include <avr/eeprom.h>
 #include <avr/pgmspace.h>
 
+#include "lprintf.h"
+
 #include "lib/i2c.h"
 #include "lib/tmp100.h"
 #include "lib/bmp085.h"
@@ -42,7 +44,7 @@
 
 #include "logging/openlog.h"
 
-//#include "eepromVars.h"
+#include "eepromVars.h"
 #include "queue.h"
 #include "dataStructures.h"
 
@@ -130,7 +132,6 @@ int16_t vSpeedAvg = 0;
 uint8_t numberOfVSpeedSamples=0;
 uint16_t lastAltitude=0;
 uint16_t lastRunTime=0;
-extern int16_t EEMEM EEvSpeedHolderSamples;
 
 //Globals
 uint8_t enableReports = 1;
@@ -140,40 +141,6 @@ uint16_t statusCode = 0x00;
 uint8_t hfSema = 0;
 
 uint32_t epochOffset;
-
-//HOLY CRAP YOU ARE STUPID PUT THESE SOMEWHERE THAT MAKES SENSE SO YOU DON'T HAVE TO EXTERN THEM
-//IN YOUR FREAKING MAIN ROUTINE
-extern uint32_t EEMEM EEepochOffset;
-extern uint16_t EEMEM EEbatchSampleEnd;
-extern int16_t EEMEM EEballastTargetPositiveVSpeed;
-extern int16_t EEMEM EEballastTargetNegativeVSpeed;
-extern uint16_t EEMEM EEballastTargetAltitude;
-extern uint16_t EEMEM EEballastSafetyAltThresh;
-extern uint16_t EEMEM EEmaxAllowableTXInterval;
-extern uint16_t EEMEM EEdataTransmitInterval;
-extern uint16_t EEMEM EEshortDataTransmitInterval;
-extern uint8_t EEMEM EEhfRapidTransmit;
-extern uint8_t EEMEM EEflightPhase;
-extern uint16_t EEMEM EEdataCollectionInterval;
-extern uint16_t EEMEM EEmaydayAltitude;
-extern int16_t EEMEM EEmaydayVSpeed;
-extern uint8_t EEMEM EEoverOceanFlag;
-extern uint32_t EEMEM EEsunriseAnticipation;
-extern int8_t EEMEM EEnightTemperatureForecast;
-extern uint16_t EEMEM EEhfDataTransmitInterval;
-extern uint8_t EEMEM EEautoBallastDisable;
-extern int8_t EEMEM EEbatteryHeaterSetpoint;
-extern uint16_t EEMEM EEcurrentTelemetryVersion;
-extern uint8_t EEMEM EEcommModuleResetCount;
-extern uint8_t EEMEM EEflightComputerResetCount;
-extern uint32_t EEMEM EEepochOfLastBatchTransmit;
-extern uint8_t EEMEM EEepochStartSeconds;
-extern uint8_t EEMEM EEepochStartMinutes;
-extern uint8_t EEMEM EEepochStartHours;
-extern uint8_t EEMEM EEepochStartDays;
-extern uint8_t EEMEM EEEpochLock;
-extern uint16_t EEMEM EEhfTimeToTx;
-extern uint8_t EEMEM EEhfLenngthToTx;
 
 static FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 //Watchdog Vars
@@ -756,7 +723,7 @@ void dumpVarsToGSP(void)
 	lprintf_P(PSTR("TelemBitmap: %lx "), eeprom_read_dword(&EEcurrentTelemetryBitmap[0]));
     lprintf_P(PSTR("%lx "), eeprom_read_dword(&EEcurrentTelemetryBitmap[1]));
     lprintf_P(PSTR("%lx"), eeprom_read_dword(&EEcurrentTelemetryBitmap[2]));
-	lprintf_P(PSTR("telemetrySpeedDial: %d"), eeprom_read_word(&EEcurrentTelemetryVersion));
+	lprintf_P(PSTR("telemetrySpeedDial: %u"), eeprom_read_word(&EEcurrentTelemetryVersion));
 
     lprintf_P(PSTR("epLoc: %d"), eeprom_read_byte(&EEEpochLock));
 
@@ -881,11 +848,6 @@ void processMonitor(uint32_t time)
 }
 
 //Calculate Running Avg. of Vertical Speed
-
-//THIS IS DEFINED IN EEPROMVARS.H, GOD THIS IS STUPID
-#define VSPEEDSAMPLESDESIRED 20
-
-
 void calculateVspeed(uint32_t time)
 {
 	#ifdef FCPUDEBUG
@@ -1296,7 +1258,7 @@ void collectData(uint32_t time)
 	//variable StatusCode
 
 	//Get Helium temperature
-	/*int16_t heliumTemperature;
+	int16_t heliumTemperature;
 	uint8_t helVal[2]= {0,0};
 	i2cSendStart();
 	i2cWaitForComplete();
@@ -1321,8 +1283,7 @@ void collectData(uint32_t time)
 	helVal[1] += i2cGetReceivedByte();
 	i2cWaitForComplete();
 	i2cSendStop();
-	heliumTemperature = (int16_t)(((uint16_t)helVal[0] * 256) + (helVal[1]));*/
-	int16_t heliumTemperature = 10;
+	heliumTemperature = (int16_t)(((uint16_t)helVal[0] * 256) + (helVal[1]));
 	lprintf("11 ");
 	//NEED COMMANDS FROM TIM
 	//format into string
@@ -1388,11 +1349,8 @@ void collectData(uint32_t time)
 
 	//store in openlog
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("Sample String: "));
-		for(int i=0; i < SAMPLESTRINGSIZEINCHARS; i++)
-		{
-			lprintf("%s", sampleString);
-		}
+	lprintf("SS: ");
+	lprintf("%s", sampleString);
 	#endif
 	putDataSample(sampleString);
 
@@ -1620,7 +1578,7 @@ void flightPhaseLogic(uint32_t time)
 				//Save time
 			}
 			#ifdef FCPUDEBUG
-				lprintf_P(PSTR("Phase 0: Pre"));
+				//lprintf_P(PSTR("Phase 0: Pre"));
 
 			#endif
 			//reschedule 1 second from now
@@ -1808,74 +1766,6 @@ uint8_t uart_getchar(void)
         return UDR1;
 	}
 
-}
-
-int lprintf(char *str, ...)
-{
-	char lstr[100];
-	uint8_t i2cSend[101];
-	int chars;
-	va_list args;
-
-	va_start(args, str);
-
-	chars = vsnprintf(lstr, 100, str, args);
-
-	if(chars > 100)
-	{
-		va_end(args);
-		return 1;
-	} else {
-		int i=0;
-		i2cSend[0] = 'F';
-		for(i=0; i <=chars; i++)
-		{
-			i2cSend[i+1] = (uint8_t)lstr[i];
-		}
-		uint8_t retVal = i2cMasterSendNI(0b00001110, chars+1, i2cSend);
-		if(retVal != I2C_OK)
-		{
-			yellow_on();
-		}
-
-		va_end(args);
-		return 0;
-	}
-	_delay_ms(100);
-}
-
-int lprintf_P(const char *str, ...)
-{
-	char lstr[100];
-	uint8_t i2cSend[101];
-	int chars;
-	va_list args;
-
-	va_start(args, str);
-
-	chars = vsnprintf_P(lstr, 100, str, args);
-
-	if(chars > 100)
-	{
-		va_end(args);
-		return 1;
-	} else {
-		int i=0;
-		i2cSend[0] = 'F';
-		for(i=0; i <=chars; i++)
-		{
-			i2cSend[i+1] = (uint8_t)lstr[i];
-		}
-		uint8_t retVal = i2cMasterSendNI(0b00001110, chars+1, i2cSend);
-		if(retVal != I2C_OK)
-		{
-			yellow_on();
-		}
-
-		va_end(args);
-		return 0;
-	}
-	_delay_ms(100);
 }
 
 void get_mcusr(void)

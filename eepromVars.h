@@ -14,84 +14,84 @@
 //
 //*****************************************************************************
 
-#ifndef EEPROMVARS_H
+#ifndef EEPROMVARS_Hf
 #define EEPROMVARS_H
 
 #include <avr/eeprom.h>
 
-uint8_t EEMEM EEepochStartSeconds;
-uint8_t EEMEM EEepochStartMinutes;
-uint8_t EEMEM EEepochStartHours;
-uint8_t EEMEM EEepochStartDays;
+extern uint8_t EEMEM EEepochStartSeconds;
+extern uint8_t EEMEM EEepochStartMinutes;
+extern uint8_t EEMEM EEepochStartHours;
+extern uint8_t EEMEM EEepochStartDays;
 
-uint16_t EEMEM EEballastTargetAltitude;
-int16_t EEMEM EEballastTargetPositiveVSpeed;
-int16_t EEMEM EEballastTargetNegativeVSpeed;
+extern uint16_t EEMEM EEballastTargetAltitude;
+extern int16_t EEMEM EEballastTargetPositiveVSpeed;
+extern int16_t EEMEM EEballastTargetNegativeVSpeed;
 
-uint16_t EEMEM EEmaydayAltitude;
-int16_t EEMEM EEmaydayVSpeed;
+extern uint16_t EEMEM EEmaydayAltitude;
+extern int16_t EEMEM EEmaydayVSpeed;
 
-uint16_t EEMEM EEballastSafetyAltThresh;
-uint8_t EEMEM EEautoBallastDisable;
+extern uint16_t EEMEM EEballastSafetyAltThresh;
+extern uint8_t EEMEM EEautoBallastDisable;
 
-uint8_t EEMEM EEoverOceanFlag;
+extern uint8_t EEMEM EEoverOceanFlag;
 
-int8_t EEMEM EEnightTemperatureForecast;
-uint32_t EEMEM EEsunriseAnticipation;
+extern int8_t EEMEM EEnightTemperatureForecast;
+extern uint32_t EEMEM EEsunriseAnticipation;
 
-uint16_t EEMEM EEmaxAllowableTXInterval;
+extern uint16_t EEMEM EEmaxAllowableTXInterval;
 
-int8_t EEMEM EEbatteryHeaterSetpoint;
+extern int8_t EEMEM EEbatteryHeaterSetpoint;
 
-uint16_t EEMEM EEdataCollectionInterval;  //Var 0x03
-uint16_t EEMEM EEdataTransmitInterval;  //Var 0x04
-uint16_t EEMEM EEshortDataTransmitInterval;
+extern uint16_t EEMEM EEdataCollectionInterval;  //Var 0x03
+extern uint16_t EEMEM EEdataTransmitInterval;  //Var 0x04
+extern uint16_t EEMEM EEshortDataTransmitInterval;
 
-uint16_t EEMEM EEhfDataTransmitInterval;
-uint8_t EEMEM EEhfRapidTransmit;
+extern uint16_t EEMEM EEhfDataTransmitInterval;
+extern uint8_t EEMEM EEhfRapidTransmit;
 
 
-uint32_t EEMEM EEepochOfLastBatchTransmit;
+extern uint32_t EEMEM EEepochOfLastBatchTransmit;
 
-uint16_t EEMEM EEcurrentBatchNumber;
-uint16_t EEMEM EEbatchSampleStart;
-uint16_t EEMEM EEbatchSampleEnd;
+extern uint16_t EEMEM EEcurrentBatchNumber;
+extern uint16_t EEMEM EEbatchSampleStart;
+extern uint16_t EEMEM EEbatchSampleEnd;
 
-uint16_t EEMEM EEcommPromStart;
-uint16_t EEMEM EEcommPromEnd;
+extern uint16_t EEMEM EEcommPromStart;
+extern uint16_t EEMEM EEcommPromEnd;
 
-uint8_t EEMEM EEflightComputerResetCount;
-uint8_t EEMEM EEcommModuleResetCount;
+extern uint8_t EEMEM EEflightComputerResetCount;
+extern uint8_t EEMEM EEcommModuleResetCount;
 
-uint8_t EEMEM EEflightPhase;  //Var 0x05
+extern uint8_t EEMEM EEflightPhase;  //Var 0x05
 
-uint32_t EEMEM EEcurrentTelemetryBitmap[3]; //Var 0x06
-uint16_t EEMEM EEcurrentTelemetryVersion; //Var 0x07
+extern uint32_t EEMEM EEcurrentTelemetryBitmap[3]; //Var 0x06
+extern uint16_t EEMEM EEcurrentTelemetryVersion; //Var 0x07
 
-uint8_t EEMEM EEEpochLock = 0;
+extern uint8_t EEMEM EEEpochLock;
 
-uint16_t EEMEM EEhfTimeToTx;
-uint8_t EEMEM EEhfLenngthToTx;
+extern uint16_t EEMEM EEhfTimeToTx;
+extern uint8_t EEMEM EEhfLenngthToTx;
 
-uint32_t EEMEM EEepochOffset;
+extern uint32_t EEMEM EEepochOffset;
 
 //THIS IS ALSO DEFINED IN MAIN, REMEMBER TO CHANGE THIS DUMMY
 #define VSPEEDSAMPLESDESIRED 20
 
-int16_t EEMEM EEvSpeedHolderSamples[VSPEEDSAMPLESDESIRED];
+extern int16_t EEMEM EEvSpeedHolderSamples[VSPEEDSAMPLESDESIRED];
 
 //Needed for BMP085
-short EEMEM EEBMPac1;
-short EEMEM EEBMPac2;
-short EEMEM EEBMPac3;
-unsigned short EEMEM EEBMPac4;
-unsigned short EEMEM EEBMPac5;
-unsigned short EEMEM EEBMPac6;
-short EEMEM EEBMPb1;
-short EEMEM EEBMPb2;
-short EEMEM EEBMPmb;
-short EEMEM EEBMPmc;
-short EEMEM EEBMPmd;
+extern short EEMEM EEBMPac1;
+extern short EEMEM EEBMPac2;
+extern short EEMEM EEBMPac3;
+extern unsigned short EEMEM EEBMPac4;
+extern unsigned short EEMEM EEBMPac5;
+extern unsigned short EEMEM EEBMPac6;
+extern short EEMEM EEBMPb1;
+extern short EEMEM EEBMPb2;
+extern short EEMEM EEBMPmb;
+extern short EEMEM EEBMPmc;
+extern short EEMEM EEBMPmd;
 
 
 #endif

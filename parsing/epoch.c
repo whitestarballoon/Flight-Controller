@@ -23,9 +23,7 @@
 #include "epoch.h"
 #include <avr/eeprom.h>
 
-#ifndef EEPROMVARS_H
 #include "../eepromVars.h"
-#endif
 
 void defaultEEPROM(void)
 {
