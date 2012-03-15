@@ -261,9 +261,9 @@ void flushSatQueue(void)
     uint8_t cpe1 = commPromEnd >> 8;
     uint8_t cpe2 = commPromEnd;
 
-    #ifdef opdebug
+    //#ifdef opdebug
         lprintf_P(PSTR("CPS: %x %x CPE: %x %x\n"), cps1, cps2, cpe1, cpe2);
-    #endif
+    //#endif
 
 	i2cSendStart();
     i2cWaitForComplete();

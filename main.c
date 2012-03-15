@@ -738,7 +738,7 @@ uint8_t ballastBabySit =0;
 void processMonitor(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In Proc Mon"));
+		//lprintf_P(PSTR("In Proc Mon"));
 	#endif
 
 	uint32_t currentBitmask[3];
@@ -851,7 +851,7 @@ void processMonitor(uint32_t time)
 void calculateVspeed(uint32_t time)
 {
 	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("In Vspeed Calculator"));
+		//lprintf_P(PSTR("In Vspeed Calculator"));
 	#endif
 	struct gpsData myGPS = currentPositionData;
 
@@ -874,7 +874,7 @@ void calculateVspeed(uint32_t time)
 	//int16_t thisVspeed = (int16_t)((thisAltitude - lastAltitude) / ((float)(time - lastRunTime)/60.));
 	int16_t thisVspeed = 30*(thisAltitude - lastAltitude);
 	vSpeedInstant[numberOfVSpeedSamples-1] = thisVspeed;
-	lprintf_P(PSTR("This Vspeed: %d"), thisVspeed);
+	//lprintf_P(PSTR("This Vspeed: %d"), thisVspeed);
 	int32_t vSpeedAdder=0;
 	for(int i = 0; i < numberOfVSpeedSamples; i++)
 	{
@@ -1350,7 +1350,7 @@ void collectData(uint32_t time)
 	//store in openlog
 	#ifdef FCPUDEBUG
 	lprintf("SS: ");
-	lprintf("%s", sampleString);
+	//lprintf("%s", sampleString);
 	#endif
 	putDataSample(sampleString);
 
