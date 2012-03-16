@@ -13,7 +13,6 @@
 #define BMP085FC 0xEE
 #define OSS 0
 
-extern int lprintf(char *, ...);
 void BMP085_Calibration(void);
 short bmp085ReadShort(unsigned char address);
 unsigned long bmp085ReadTemp(void);

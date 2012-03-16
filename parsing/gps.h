@@ -18,9 +18,5 @@
 
 #include "../dataStructures.h"
 
-extern uint8_t uart_getchar(void);
-extern int lprintf(char *, ...);
-extern int lprintf_P(const char *, ...);
-
 void getGPS(struct gpsData *outputData);
 void debugPrintRawStrings(void);

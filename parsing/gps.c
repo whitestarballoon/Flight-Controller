@@ -21,6 +21,8 @@
 #include <avr/pgmspace.h>
 #include <avr/wdt.h>
 
+#include "../uart.h"
+#include "../lprintf.h"
 
 #include "gps.h"
 

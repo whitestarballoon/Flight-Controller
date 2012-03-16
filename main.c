@@ -13,12 +13,6 @@
 //		which can be found at http://www.gnu.org/licenses/gpl.txt
 //
 //*****************************************************************************
-//*****************************************************************************
-//
-// TODO: Before flight, have at least 2 people go through this code with a fine
-//       tooth comb to root out any "remove or change before flight" comments.
-//
-//*****************************************************************************
 #include <stdio.h>
 #include <stdint.h>
 #include <avr/io.h>
@@ -29,6 +23,8 @@
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
 #include <avr/pgmspace.h>
+
+#include "uart.h"
 
 #include "lprintf.h"
 
@@ -94,10 +90,6 @@
 //======================
 uint32_t now(void);
 void ioinit(void);      // initializes IO
-static int uart_putchar(char c, FILE *stream);
-uint8_t uart_getchar(void);
-int lprintf(char *, ...);
-int lprintf_P(const char *str, ...);
 void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData);
 
 //Test Vars
@@ -1737,34 +1729,6 @@ void ioinit (void)
 
     i2cInit();
     //i2cSetBitrate(10);
-
-}
-
-
-
-static int uart_putchar(char c, FILE *stream)
-{
-    if (c == '\n') uart_putchar('\r', stream);
-
-    loop_until_bit_is_set(UCSR1A, UDRE1);
-    UDR1 = c;
-
-    return 0;
-}
-
-uint8_t uart_getchar(void)
-{
-	uint16_t errorCounter = 0xFFFF;
-    while( !(UCSR1A & (1<<RXC1)) && (errorCounter > 100))
-    {
-		errorCounter--;
-	}
-	if(errorCounter <= 101)
-	{
-        return 0xff;
-	} else {
-        return UDR1;
-	}
 
 }
 

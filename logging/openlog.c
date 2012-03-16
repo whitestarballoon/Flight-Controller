@@ -27,14 +27,13 @@
 #include <util/delay.h>
 
 #include "../dataStructures.h"
+#include "lprintf.h"
 
 #include "openlog.h"
 
 #define OPENLOGUBRR 77 //9600 baud
 
 static FILE olout = FDEV_SETUP_STREAM(ol_putchar, NULL, _FDEV_SETUP_WRITE);
-extern int lprintf(char *, ...);
-extern int lprintf_P(const char *, ...);
 
 //REMOVE BEFORE FLIGHT, THIS REMOVES THE LOG ON INIT
 void initOpenLogTest(void)

@@ -61,7 +61,7 @@ TARGET = main
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = eepromVars.c lib/i2c.c lib/tmp100.c lib/bmp085.c lib/ds3231.c\
+SRC = uart.c eepromVars.c lib/i2c.c lib/tmp100.c lib/bmp085.c lib/ds3231.c\
 queue.c parsing/epoch.c parsing/gps.c logging/openlog.c comm/outputParse.c lprintf.c $(TARGET).c
 
 

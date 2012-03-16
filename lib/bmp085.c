@@ -23,6 +23,7 @@
 
 #include <avr/eeprom.h>
 
+#include "../lprintf.h"
 #include "i2c.h"
 #include "bmp085.h"
 
