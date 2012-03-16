@@ -28,6 +28,8 @@
 
 #include <avr/io.h>
 
+#include "lprintf.h"
+
 #include "dataStructures.h"
 #include "queue.h"
 

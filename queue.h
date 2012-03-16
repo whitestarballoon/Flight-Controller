@@ -23,7 +23,6 @@
 
 #define QUEUEDEPTH 15
 
-extern int lprintf(char *, ...);
 void scheduleQueueAdd(scheduledFunction thisFunction, uint32_t epochTime);
 int8_t scheduleQueueGetTop(scheduledFunction *returnFunction, uint32_t *returnTime);
 

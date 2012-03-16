@@ -100,7 +100,6 @@ void debugBallast(void);
 void dumpGPS(void);
 
 //DEFINE SCHEDULED THINGS
-void rapidHFXmit(uint32_t);
 void timedCutdown(uint32_t);
 void processMonitor(uint32_t);
 void calculateVspeed(uint32_t);
@@ -109,13 +108,9 @@ void autoBallast(uint32_t);
 void collectData(uint32_t);
 void transmitSamples(uint32_t);
 void transmitShortReport(uint32_t);
-void updateCommHFTelemetry(uint32_t);
-void rapidHFXmit(uint32_t);
 void ballastStaticTickle(uint32_t);
 void flightPhaseLogic(uint32_t);
 void resetWatchdog(uint32_t);
-void turnHfOn(uint32_t);
-void turnHfOff(uint32_t);
 void incrementEpoch(uint32_t);
 void updateSpeedDial(uint16_t speedDial);
 
@@ -130,7 +125,6 @@ uint8_t enableReports = 1;
 uint8_t reportCounterL=0;
 uint8_t reportCounterH=0;
 uint16_t statusCode = 0x00;
-uint8_t hfSema = 0;
 
 uint32_t epochOffset;
 
@@ -138,10 +132,6 @@ static FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 //Watchdog Vars
 uint8_t mcusr_mirror __attribute__ ((section (".noinit")));
 void get_mcusr(void) __attribute__((naked)) __attribute__((section(".init3")));
-
-//======================
-
-
 
 int main (void)
 {
@@ -170,7 +160,6 @@ int main (void)
 	{
 		eeprom_write_dword(&EEepochOffset, 0);
 	}
-	//error = getTime(&seconds, &minutes, &hours, &days);
 
 	uint32_t offset = eeprom_read_dword(&EEepochOffset);
 	uint8_t offsetDays = offset / 86400;
@@ -203,14 +192,7 @@ int main (void)
 		initOpenLogFlight();
 	}
 
-
 	lprintf("SSAlive");
-
-    if((mcusr_mirror & 0x08) == 0x08)
-    {
-        //lprintf("WDTReset");
-    }
-
 
 	uint32_t rnow = now();
 	scheduleQueueAdd(&resetWatchdog, rnow);
@@ -236,15 +218,9 @@ int main (void)
 
 		if(error == 0 && scheduleTime <= rightNow)
 		{
-			/*#ifdef FCPUDEBUG
-				lprintf_P(PSTR("Running some function"));
-			#endif*/
 			thisFunction(rightNow);
 		} else if (error == 0 && scheduleTime > rightNow)
 		{
-			/*#ifdef FCPUDEBUG
-				lprintf_P(PSTR("ReScheduling some function"));
-			#endif*/
 			scheduleQueueAdd(thisFunction, scheduleTime);
 		} else {
 			//Error!
@@ -252,20 +228,10 @@ int main (void)
 		_delay_ms(50);
 	}
 
-	while(1)
-	{
-		red_on();
-		_delay_ms(500);
-		red_off();
-		_delay_ms(500);
-	}
-
-
     return(0);
 }
 
 uint8_t cutdownStatus = 0;
-uint8_t rapidHFEnable=0;
 void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 {
     uint8_t temp;
@@ -395,24 +361,6 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 				eeprom_write_word(&EEballastSafetyAltThresh, holder);
 			}
 			break;
-		case 0x0E:
-			//set HF Transmit Interval
-			//if(receiveDataLength == 3)
-			{
-				uint16_t holder = ((uint16_t)recieveData[1] << 8) + recieveData[2];
-				eeprom_write_word(&EEhfDataTransmitInterval, holder);
-			}
-			break;
-		case 0x0F:
-			//if(receiveDataLength == 1)
-			{
-				cutdownStatus= 1;
-				//enable rapid hf xmit
-				rapidHFEnable = 1;
-				//schedule rapid hf xmit
-				scheduleQueueAdd(&rapidHFXmit, now());
-			}
-			break;
 		case 0x10:
 			//if(receiveDataLength == 5)
 			{
@@ -467,13 +415,6 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 				eeprom_write_word(&EEmaydayAltitude, holder);
 			}
 			break;
-		case 0x17:
-			//set Set Rapid HF Transmit Period
-			//if(receiveDataLength == 2)
-			{
-				eeprom_write_byte(&EEhfRapidTransmit, recieveData[1]);
-			}
-			break;
 		case 0x18:
 			//if(receiveDataLength == 3)
 			{
@@ -493,17 +434,6 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
                 eeprom_write_word(&EEshortDataTransmitInterval, holder);
             }
         break;
-        case 0x1C:
-            {
-                int16_t holder = ((uint16_t)recieveData[1]<<8) + recieveData[2];
-                eeprom_write_word(&EEhfTimeToTx, holder);
-            }
-        break;
-        case 0x1D:
-            {
-                eeprom_write_byte(&EEhfLenngthToTx, recieveData[0]);
-            }
-        break;
         case 0xf1:
             transmitSamples(0xFFFFFFFF);
             break;
@@ -513,21 +443,10 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
         case 0xf4:
             while(1);
             break;
-        case 0xF5:
-            POWERPORT &= ~_BV(I2C9PT);
-            hfSema = 0;
-            lprintf("HFOFF");
-            break;
-        case 0xF6:
-            POWERPORT |= _BV(I2C9PT);
-            hfSema = 2;
-            lprintf("HFON");
-            break;
 		case 0xF7:
 			eeprom_write_byte(&EEEpochLock, recieveData[1]);
 			break;
 		case 0xFB:
-			//lprintf_P(PSTR("Defaulting the EEPROM..."));
 			defaultEEPROM();
 			break;
 		case 0xFC:
@@ -632,26 +551,6 @@ void updateSpeedDial(uint16_t speedDial)
             eeprom_write_word(&EEdataTransmitInterval, 300);
         }
         break;
-        /*case 0x08:
-        {
-            //Need Data Now!
-            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b00000000000010101010000100001000);
-            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b00000000000000000000000000000000);
-            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
-            eeprom_write_word(&EEdataCollectionInterval, 60);
-            eeprom_write_word(&EEdataTransmitInterval, 60);
-        }
-        break;
-        case 0x09:
-        {
-            //Need Science Data now!
-            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010101011010101010000101011111);
-            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
-            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
-            eeprom_write_word(&EEdataCollectionInterval, 60);
-            eeprom_write_word(&EEdataTransmitInterval, 60);
-        }
-        break;*/
 
     }
 }
@@ -659,12 +558,6 @@ void updateSpeedDial(uint16_t speedDial)
 
 void dumpVarsToGSP(void)
 {
-
-	//lprintf_P(PSTR("epochStartSec: %d"), eeprom_read_byte(&EEepochStartSeconds));
-	//lprintf_P(PSTR("epochStartMin: %d"), eeprom_read_byte(&EEepochStartMinutes));
-	//lprintf_P(PSTR("epochStartHrs: %d"), eeprom_read_byte(&EEepochStartHours));
-	//lprintf_P(PSTR("epochStartDays: %d"), eeprom_read_byte(&EEepochStartDays));
-	_delay_ms(500);
 
 	lprintf_P(PSTR("ballastTrgtAlt: %u"), eeprom_read_word(&EEballastTargetAltitude));
 	lprintf_P(PSTR("ballastTrgt +Vspd: %d"), eeprom_read_word((uint16_t *)&EEballastTargetPositiveVSpeed));
@@ -678,12 +571,6 @@ void dumpVarsToGSP(void)
 	uint8_t variable = (volatile int)eeprom_read_byte(&EEautoBallastDisable);
 	lprintf_P(PSTR("autoBallast dsbled?: %d"), variable);
 
-	//lprintf_P(PSTR("overOcean? %d"), eeprom_read_byte(&EEoverOceanFlag));
-
-	//lprintf_P(PSTR("nightTempForecast: %d"), eeprom_read_byte(&EEnightTemperatureForecast));
-	//lprintf_P(PSTR("sunriseAntcpation: %ld"), eeprom_read_dword(&EEsunriseAnticipation));
-	_delay_ms(500);
-
 	lprintf_P(PSTR("maxAllowedTXInterval: %u"), eeprom_read_word(&EEmaxAllowableTXInterval));
 
 	lprintf_P(PSTR("batteryHeaterSet: %d"), eeprom_read_byte((uint8_t *)&EEbatteryHeaterSetpoint));
@@ -693,34 +580,18 @@ void dumpVarsToGSP(void)
     lprintf_P(PSTR("shortTXInterval: %u"), eeprom_read_word(&EEshortDataTransmitInterval));
 	_delay_ms(500);
 
-	lprintf_P(PSTR("HFdataXmitInterval: %u"), eeprom_read_word(&EEhfDataTransmitInterval));
-	lprintf_P(PSTR("HFrapidXmitInterval: %u"), eeprom_read_byte(&EEhfRapidTransmit));
-
-	//lprintf_P(PSTR("epochOfLastBatchTX: %ld"), eeprom_read_dword(&EEepochOfLastBatchTransmit));
-
 	lprintf_P(PSTR("curBatchNumber: %u"), eeprom_read_word(&EEcurrentBatchNumber));
 	lprintf_P(PSTR("batchSampleStart: %u"), eeprom_read_word(&EEbatchSampleStart));
 	lprintf_P(PSTR("batchSampleEnd: %u"), eeprom_read_word(&EEbatchSampleEnd));
 	_delay_ms(500);
 
-	//lprintf_P(PSTR("commEEPROMStart: %d"), eeprom_read_word(&EEcommPromStart));
-	//lprintf_P(PSTR("commEEPROMEnd: %d"), eeprom_read_word(&EEcommPromEnd));
-
-	//lprintf_P(PSTR("flightComputerResetCount: %d"), eeprom_read_byte(&EEflightComputerResetCount));
-	//lprintf_P(PSTR("commModuleResetCount: %d"), eeprom_read_byte(&EEcommModuleResetCount));
-
 	lprintf_P(PSTR("Phase: %d"), eeprom_read_byte(&EEflightPhase));
-	_delay_ms(500);
-
 	lprintf_P(PSTR("TelemBitmap: %lx "), eeprom_read_dword(&EEcurrentTelemetryBitmap[0]));
     lprintf_P(PSTR("%lx "), eeprom_read_dword(&EEcurrentTelemetryBitmap[1]));
     lprintf_P(PSTR("%lx"), eeprom_read_dword(&EEcurrentTelemetryBitmap[2]));
 	lprintf_P(PSTR("telemetrySpeedDial: %u"), eeprom_read_word(&EEcurrentTelemetryVersion));
 
     lprintf_P(PSTR("epLoc: %d"), eeprom_read_byte(&EEEpochLock));
-
-	//int16_t EEMEM EEvSpeedHolderSamples[VSPEEDSAMPLESDESIRED];
-	//Maybe should print this for debug...
 
 }
 
@@ -737,15 +608,6 @@ void processMonitor(uint32_t time)
 	currentBitmask[0] = eeprom_read_dword(&EEcurrentTelemetryBitmap[0]);
 	currentBitmask[1] = eeprom_read_dword(&EEcurrentTelemetryBitmap[1]);
 	currentBitmask[2] = eeprom_read_dword(&EEcurrentTelemetryBitmap[2]);
-    uint16_t hfTimeToTx = eeprom_read_word(&EEhfTimeToTx);
-    uint8_t hfLengthToTx = eeprom_read_byte(&EEhfLenngthToTx);
-
-    if(((time/60) > hfTimeToTx) && hfSema == 0)
-    {
-        scheduleQueueAdd(&turnHfOn, time);
-        scheduleQueueAdd(&turnHfOff, time+hfLengthToTx);
-        eeprom_write_word(&EEhfTimeToTx, time+eeprom_read_byte((uint8_t *)&EEhfDataTransmitInterval));
-    }
 
 	getGPS(&currentPositionData);
 
@@ -1047,7 +909,6 @@ void autoBallast(uint32_t time)
 	}
 
 }
-
 
 void collectData(uint32_t time)
 {
@@ -1488,27 +1349,6 @@ void transmitSamples(uint32_t time)
 
 }
 
-//Simply add this to the scheduler queue if you want it.
-//Note: needs to be able to remove itself from the queue.
-
-void rapidHFXmit(uint32_t time)
-{
-	#ifdef FCPUDEBUG
-		lprintf_P(PSTR("Rapid HF TX"));
-	#endif
-	if(rapidHFEnable == 1 && hfSema != 2)
-	{
-		//send comm controller rapid HF command
-		POWERPORT |= _BV(I2C9PT);
-		hfSema = 1;
-		scheduleQueueAdd(&rapidHFXmit, time+eeprom_read_byte(&EEhfRapidTransmit));
-	} else {
-        POWERPORT &= ~_BV(I2C9PT);
-        hfSema = 0;
-	}
-}
-
-
 void ballastStaticTickle(uint32_t time)
 {
 	#ifdef FCPUDEBUG
@@ -1577,18 +1417,6 @@ void flightPhaseLogic(uint32_t time)
 			scheduleQueueAdd(&flightPhaseLogic, time+1);
 			break;
 		case 1:
-			//change sample time to 30 seconds
-			//this is really stupid.  change this BEFORE FLIGHT
-			//eeprom_write_word(&EEdataCollectionInterval, 30);
-			//schedule rapid hf xmit
-			if(rapidHFEnable == 0)
-			{
-				scheduleQueueAdd(&rapidHFXmit, time);
-			}
-			//enable rapid hf xmit
-			rapidHFEnable = 1;
-
-
 			//reschedule 1 minute from now
 			if(((myGPS.altitude > 8500) && (vSpeedAvg < 0) && ((myFlags & 1) == 1)) || (cutdownStatus == 1))
 			{
@@ -1600,8 +1428,6 @@ void flightPhaseLogic(uint32_t time)
 			#endif
 			break;
 		case 2:
-			//disable rapid hf xmit
-			rapidHFEnable = 0;
 			//make sure sat is enabled in here! BEFORE FLIGHT
 			if(((vSpeedAvg < maydayVSpeed) || (thisAltitude < maydayAltitude)  || (cutdownStatus == 1)) && ((myFlags & 1) == 1))
 			{
@@ -1618,12 +1444,6 @@ void flightPhaseLogic(uint32_t time)
 			break;
 		case 3:
 			//disable sat in here! BEFORE FLIGHT
-			//enable rapid hf xmit
-			if(rapidHFEnable == 0)
-			{
-				scheduleQueueAdd(&rapidHFXmit, time);
-			}
-			rapidHFEnable = 1;
 			if((vSpeedAvg > maydayVSpeed) && (thisAltitude > maydayAltitude) && (cutdownStatus == 0) && ((myFlags & 1) == 1))
 			{
 					myPhase = 2;
@@ -1664,30 +1484,9 @@ void resetWatchdog(uint32_t time)
 
 }
 
-void turnHfOff(uint32_t time)
-{
-    POWERPORT &= ~_BV(I2C9PT);
-
-    #ifdef FCPUDEBUG
-        lprintf_P(PSTR("HF ON"));
-    #endif
-
-}
-
-void turnHfOn(uint32_t time)
-{
-
-    POWERPORT |= _BV(I2C9PT);
-    #ifdef FCPUDEBUG
-        lprintf_P(PSTR("HF OFF"));
-    #endif
-
-}
-
 void incrementEpoch(uint32_t time)
 {
     eeprom_write_dword(&EEepochOffset, time);
-
     scheduleQueueAdd(&incrementEpoch, time+1);
 }
 
@@ -1702,7 +1501,6 @@ inline uint32_t now(void)
 		_delay_ms(50);
 		error = getTime(&seconds, &minutes, &hours, &days);
 	}
-	//lprintf("Now: %lu", getEpochSeconds(seconds, minutes, hours, days));
     return getEpochSeconds(seconds, minutes, hours, days);
 
 }
@@ -1724,11 +1522,9 @@ void ioinit (void)
     UBRR1L = MYUBRR;
     UCSR1B = (1<<RXEN1)|(1<<TXEN1);
 
-
     stdout = &mystdout; //Required for printf init
 
     i2cInit();
-    //i2cSetBitrate(10);
 
 }
 

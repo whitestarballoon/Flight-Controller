@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -9,8 +8,9 @@
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 
+#include "../lprintf.h"
 #include "../dataStructures.h"
-//#include "../eepromVars.h"
+#include "../eepromVars.h"
 
 #include "../progmemVars.h"
 #include "../logging/openlog.h"
@@ -24,18 +24,7 @@
 //if commented out, no eeprom writing
 #define detacheeprom
 
-
 #define COMPROM 0b10100000
-
-
-extern int lprintf(char *, ...);
-extern int lprintf_P(const char *str, ...);
-extern uint16_t EEMEM EEcurrentTelemetryVersion;
-extern uint8_t i2cMasterSendNI(uint8_t, uint8_t, uint8_t*);
-extern void i2cSendStart(void);
-extern uint8_t i2cWaitForComplete(void);
-extern void i2cSendByte(uint8_t);
-extern void i2cSendStop(void);
 
 uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, uint16_t batch)
 {

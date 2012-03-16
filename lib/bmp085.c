@@ -23,22 +23,12 @@
 
 #include <avr/eeprom.h>
 
+#include "eepromVars.h"
+
 #include "../lprintf.h"
 #include "i2c.h"
 #include "bmp085.h"
 
-//Needed for BMP085
-extern int16_t EEMEM EEBMPac1;
-extern int16_t EEMEM EEBMPac2;
-extern int16_t EEMEM EEBMPac3;
-extern uint16_t EEMEM EEBMPac4;
-extern uint16_t EEMEM EEBMPac5;
-extern uint16_t EEMEM EEBMPac6;
-extern int16_t EEMEM EEBMPb1;
-extern int16_t EEMEM EEBMPb2;
-extern int16_t EEMEM EEBMPmb;
-extern int16_t EEMEM EEBMPmc;
-extern int16_t EEMEM EEBMPmd;
 
 void BMP085_Calibration(void)
 {
