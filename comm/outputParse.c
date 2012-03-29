@@ -204,9 +204,10 @@ void loadBatch(void)
 		#endif
 		for(int j=0; j < sizeOfSample; j++)
 		{
-			#ifdef opdebug
-				//lprintf("%x ", thisSample[j]);
-			#endif
+			//#ifdef opdebug
+			//if(j < 10)
+            //    lprintf("%x ", thisSample[j]);
+			//#endif
 			uint8_t data[3];
 			uint8_t error;
 			data[0] = commPromEnd >> 8;
@@ -240,6 +241,11 @@ void flushSatQueue(void)
 
 	uint16_t commPromEnd = eeprom_read_word(&EEcommPromEnd);
 	uint16_t commPromStart = eeprom_read_word(&EEcommPromStart);
+
+    if(commPromStart == commPromEnd)
+    {
+        return; //Early return bad, kids
+    }
 
     #ifdef opdebug
     lprintf_P(PSTR("Sending Long Report\n"));

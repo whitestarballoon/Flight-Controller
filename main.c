@@ -452,12 +452,6 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
 		case 0xFC:
 			collectData(0xFFFFFFFF);
 			break;
-		case 0xFD:
-			//dumpTemps();
-			break;
-		case 0xFE:
-			//bmpTest();
-			break;
 		case 0xFF:
 			dumpVarsToGSP();
 			break;
@@ -551,6 +545,26 @@ void updateSpeedDial(uint16_t speedDial)
             eeprom_write_word(&EEdataTransmitInterval, 300);
         }
         break;
+        case 0x08:
+        {
+            //1 minute collect, 1 minute transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b00000000000010101010000100001000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b00000000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 60);
+            eeprom_write_word(&EEdataTransmitInterval, 60);
+        }
+        break;
+        case 0x09:
+        {
+            //1 minute collect, 1 minute transmit
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010101011010101010000101011111);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
+            eeprom_write_word(&EEdataCollectionInterval, 60);
+            eeprom_write_word(&EEdataTransmitInterval, 60);
+        }
+        break;
 
     }
 }
@@ -638,58 +652,6 @@ void processMonitor(uint32_t time)
 		currentPositionData.altitude = 0;
 		vSpeedAvg = 0;
 		//eeprom_write_byte(&EEautoBallastDisable, 1);
-	}
-
-	//get battetry temp
-	uint16_t rawBattTemp = tmp100rawTemp(TMP101BH)>>4;
-	int16_t btinm = get12bit2scomp(rawBattTemp);
-	int8_t batteryTemperature = (int8_t)(btinm/16);
-	//conver to 8 bit
-
-	//If battery temp is below setpoint, turn on telemetry channel
-	int8_t batterySetpoint = eeprom_read_byte((uint8_t *)&EEbatteryHeaterSetpoint);;
-	if(batteryTemperature < batterySetpoint)
-	{
-		currentBitmask[0] |= ((uint32_t)(1UL<<24UL));
-	}
-
-	//GET RAW PACK VOLTAGE, If below Nominal, transmit
-	//get raw pack voltage
-	//AD7998 Interfacing
-	i2cSendStart();
-	i2cWaitForComplete();
-	i2cSendByte(AD7992);
-	i2cWaitForComplete();
-	i2cSendByte(0x10);
-	i2cWaitForComplete();
-	i2cSendStop();
-
-	_delay_ms(5);
-
-	i2cSendStart();
-	i2cWaitForComplete();
-	i2cSendByte(AD7992+1);
-	i2cWaitForComplete();
-	i2cReceiveByte(1);
-	i2cWaitForComplete();
-	uint16_t batteryValue = (uint16_t)i2cGetReceivedByte() << 8;
-	i2cWaitForComplete();
-	i2cReceiveByte(0);
-	i2cWaitForComplete();
-	batteryValue += i2cGetReceivedByte();
-	i2cWaitForComplete();
-	i2cSendStop();
-	batteryValue &= 0x0FFF;
-	//This is not such a magic value.  12 bits AD = 4096
-	//Divider network = 4.07 kohms and 20 khoms
-	//(3.3 volts / 4096) * (24.07/4.07) = 0.0047647
-	//Multiply by 10 to get bigger value.
-	batteryValue = (uint16_t)((((float)batteryValue*0.0047647))*10.);
-	uint8_t outputVoltage = (uint8_t)batteryValue;
-
-	if(batteryValue < 15)
-	{
-		currentBitmask[0] |= _BV(1);
 	}
 
     eeprom_write_dword(&EEcurrentTelemetryBitmap[0], currentBitmask[0]);
