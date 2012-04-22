@@ -158,6 +158,7 @@ int main (void)
 	wdt_enable(WDTO_8S);
 	if(eeprom_read_byte(&EEEpochLock) == 0)
 	{
+        lprintf_P(PSTR("ReSet Epoch"));
 		eeprom_write_dword(&EEepochOffset, 0);
 	}
 
@@ -167,13 +168,10 @@ int main (void)
 	uint8_t offsetMinutes = (offset - (offsetDays * 86400) - (offsetHours * 3600)) / 60;
 	uint8_t offsetSeconds = (offset - (offsetDays * 86400) - (offsetHours * 3600) - (offsetMinutes * 60));
     ds3231write(0x00, offsetSeconds);
-    ds3231write(0x01,  offsetMinutes);
-    ds3231write(0x02,  offsetHours);
-    ds3231write(0x03,  offsetDays);
+    ds3231write(0x01, offsetMinutes);
+    ds3231write(0x02, offsetHours);
+    ds3231write(0x03, offsetDays);
 
-    eeprom_write_word(&EEcurrentBatchNumber, 0);
-    eeprom_write_word(&EEbatchSampleStart, 0);
-    eeprom_write_word(&EEbatchSampleEnd, 0);
     writeEpochStart(0, 0, 0, 0);
 
 	lprintf("Still Alive");
@@ -188,6 +186,9 @@ int main (void)
 	{
 		//defaultEEPROM();
         initOpenLogTest();
+        eeprom_write_word(&EEcurrentBatchNumber, 0);
+        eeprom_write_word(&EEbatchSampleStart, 0);
+        eeprom_write_word(&EEbatchSampleEnd, 0);
 	} else {
 		initOpenLogFlight();
 	}
@@ -201,7 +202,6 @@ int main (void)
 	scheduleQueueAdd(&calculateVspeed, rnow);
 	scheduleQueueAdd(&collectData, rnow);
 	scheduleQueueAdd(&transmitSamples, rnow);
-	scheduleQueueAdd(&transmitShortReport, rnow+20);  //Special case to give the comm controller a chance
 	scheduleQueueAdd(&ballastStaticTickle, rnow);
 	scheduleQueueAdd(&autoBallast, rnow);
 	scheduleQueueAdd(&flightPhaseLogic, rnow);
@@ -225,7 +225,7 @@ int main (void)
 		} else {
 			//Error!
 		}
-		_delay_ms(50);
+		_delay_ms(500);
 	}
 
     return(0);
@@ -435,6 +435,7 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
             }
         break;
         case 0xf1:
+            collectData(0xFFFFFFFF);
             transmitSamples(0xFFFFFFFF);
             break;
         case 0xf2:
@@ -558,7 +559,7 @@ void updateSpeedDial(uint16_t speedDial)
         case 0x09:
         {
             //1 minute collect, 1 minute transmit
-            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010101011010101010000101011111);
+            eeprom_write_dword(&EEcurrentTelemetryBitmap[0], 0b01010101011010101010100101011111);
             eeprom_write_dword(&EEcurrentTelemetryBitmap[1], 0b01100000000000000000000000000000);
             eeprom_write_dword(&EEcurrentTelemetryBitmap[2], 0);
             eeprom_write_word(&EEdataCollectionInterval, 60);
@@ -687,8 +688,8 @@ void calculateVspeed(uint32_t time)
 		numberOfVSpeedSamples++;
 	}
 
-	//int16_t thisVspeed = (int16_t)((thisAltitude - lastAltitude) / ((float)(time - lastRunTime)/60.));
-	int16_t thisVspeed = 30*(thisAltitude - lastAltitude);
+	int16_t thisVspeed = (int16_t)((thisAltitude - lastAltitude) / ((float)(time - lastRunTime)/60.));
+	//int16_t thisVspeed = 30*(thisAltitude - lastAltitude);
 	vSpeedInstant[numberOfVSpeedSamples-1] = thisVspeed;
 	//lprintf_P(PSTR("This Vspeed: %d"), thisVspeed);
 	int32_t vSpeedAdder=0;
@@ -881,6 +882,7 @@ void collectData(uint32_t time)
 	memset(sampleString, 0x00, SAMPLESTRINGSIZEINCHARS);
 	//get time
 	uint32_t epochNow = now();
+    lprintf_P(PSTR("E: %lu"), epochNow);
 	lprintf("1 ");
 	//get ambient pressure
 	long myPressure;
@@ -1161,6 +1163,12 @@ void collectData(uint32_t time)
 	sampleString[SAMPLESTRINGSIZEINCHARS-2] = '\r';
 	sampleString[SAMPLESTRINGSIZEINCHARS-1] = '\n';
 	sampleString[SAMPLESTRINGSIZEINCHARS] = '\0';
+
+    lprintf("in: ");
+    for(int i = 0; i < 10; i++)
+    {
+        lprintf("%c", sampleString[i]);
+    }
 
 	//store in openlog
 	#ifdef FCPUDEBUG

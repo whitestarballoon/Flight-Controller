@@ -71,11 +71,18 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 
 	//BEGIN SAMPLE PREAMBLE
 	//First token is epoch time:
+
+    lprintf("out: ");
+    for(int i = 0; i < 10; i++)
+    {
+        lprintf("%c", sampleHolder[i]);
+    }
+
 	token = strtok(sampleHolder, ",");
 	uint32_t epochSample;
 	sscanf(token, "%ld", &epochSample);
 
-	//lprintf("\nep: %s\n", token);
+	lprintf("\nep: %s\n", token);
 
 	output[0] = eeprom_read_word(&EEcurrentTelemetryVersion) >> 8;
 	output[1] = eeprom_read_word(&EEcurrentTelemetryVersion);
@@ -99,18 +106,18 @@ uint16_t getTxSample(uint8_t *output, uint32_t *bitmask, uint16_t sampleNumber, 
 	bytesWritten +=sizeof(uint32_t)*3;
 
 
-
+    lprintf_P(PSTR("epochSent"));
 	output[bytesWritten] = epochSample >> 24;
-	//lprintf("%x ", output[bytesWritten]);
+	lprintf("%x ", output[bytesWritten]);
 	bytesWritten++;
 	output[bytesWritten] = epochSample >> 16;
-	//lprintf("%x ", output[bytesWritten]);
+	lprintf("%x ", output[bytesWritten]);
 	bytesWritten++;
 	output[bytesWritten] = epochSample >> 8;
-	//lprintf("%x ", output[bytesWritten]);
+	lprintf("%x ", output[bytesWritten]);
 	bytesWritten++;
 	output[bytesWritten] = epochSample;
-	//lprintf("%x\n", output[bytesWritten]);
+	lprintf("%x\n", output[bytesWritten]);
 	bytesWritten++;
 	output[bytesWritten] = batch >> 8;
 	bytesWritten++;
