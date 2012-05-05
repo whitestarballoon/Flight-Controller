@@ -434,6 +434,9 @@ void receiveCommandHandler(uint8_t receiveDataLength, uint8_t* recieveData)
                 eeprom_write_word(&EEshortDataTransmitInterval, holder);
             }
         break;
+        case 0xf0:
+        	dumpVarsToSat();
+        	break;
         case 0xf1:
             collectData(0xFFFFFFFF);
             transmitSamples(0xFFFFFFFF);
@@ -578,7 +581,7 @@ void dumpVarsToGSP(void)
 	lprintf_P(PSTR("ballastTrgt +Vspd: %d"), eeprom_read_word((uint16_t *)&EEballastTargetPositiveVSpeed));
 	lprintf_P(PSTR("ballastTrgt -Vspd: %d"), eeprom_read_word((uint16_t *)&EEballastTargetNegativeVSpeed));
 
-	lprintf_P(PSTR("maydayAlt: %ud"), eeprom_read_word(&EEmaydayAltitude));
+	lprintf_P(PSTR("maydayAlt: %u"), eeprom_read_word(&EEmaydayAltitude));
 	lprintf_P(PSTR("maydayVSpd: %d"), eeprom_read_word((uint16_t *)&EEmaydayVSpeed));
 	_delay_ms(500);
 
@@ -588,11 +591,8 @@ void dumpVarsToGSP(void)
 
 	lprintf_P(PSTR("maxAllowedTXInterval: %u"), eeprom_read_word(&EEmaxAllowableTXInterval));
 
-	lprintf_P(PSTR("batteryHeaterSet: %d"), eeprom_read_byte((uint8_t *)&EEbatteryHeaterSetpoint));
-
 	lprintf_P(PSTR("dataSampleInterval: %u"), eeprom_read_word(&EEdataCollectionInterval));
 	lprintf_P(PSTR("batchTXInterval: %u"), eeprom_read_word(&EEdataTransmitInterval));
-    lprintf_P(PSTR("shortTXInterval: %u"), eeprom_read_word(&EEshortDataTransmitInterval));
 	_delay_ms(500);
 
 	lprintf_P(PSTR("curBatchNumber: %u"), eeprom_read_word(&EEcurrentBatchNumber));
@@ -608,6 +608,69 @@ void dumpVarsToGSP(void)
 
     lprintf_P(PSTR("epLoc: %d"), eeprom_read_byte(&EEEpochLock));
 
+}
+
+//This entire function is a terrible, dirty, horrific hack.
+void dumpVarsToSat(void)
+{
+	const int sizeOfSample = 375;
+	char output[sizeOfSample];
+
+	flushSatQueue();
+
+	sprintf_P(output, PSTR("blstTrgtAlt:%u\r\n"
+		"blstTrgt+Vspd:%d\r\n"
+		"bltTrgt-Vspd:%d\r\n"
+		"mydyAlt:%u\r\n"
+		"mydyVSpd:%d\r\n"
+		"bltSftyAlt:%u\r\n"
+		"autoBlst dsbled?:%d\r\n"
+		"maxAlowdTXIntrvl:%u\r\n"
+		"SampIntrvl:%u\r\n"
+		"batchTXIntrvl:%u\r\n"
+		"curBatchNum:%u\r\n"
+		"batchSampStart:%u\r\n"
+		"batchSampEnd:%u\r\n"
+		"Phse:%d\r\n"
+		"TelemBMP:%lx %lx %lx\r\n"
+		"tlmtrySpdDial:%u\r\n"
+		"epLoc:%d"),
+		eeprom_read_word(&EEballastTargetAltitude),
+		eeprom_read_word((uint16_t *)&EEballastTargetPositiveVSpeed),
+		eeprom_read_word((uint16_t *)&EEballastTargetNegativeVSpeed),
+		eeprom_read_word(&EEmaydayAltitude),
+		eeprom_read_word((uint16_t *)&EEmaydayVSpeed),
+		eeprom_read_word(&EEballastSafetyAltThresh),
+		eeprom_read_byte(&EEautoBallastDisable),
+		eeprom_read_word(&EEmaxAllowableTXInterval),
+		eeprom_read_word(&EEdataCollectionInterval),
+		eeprom_read_word(&EEdataTransmitInterval),
+		eeprom_read_word(&EEcurrentBatchNumber),
+		eeprom_read_word(&EEbatchSampleStart),
+		eeprom_read_word(&EEbatchSampleEnd),
+		eeprom_read_byte(&EEflightPhase),
+		eeprom_read_dword(&EEcurrentTelemetryBitmap[0]),
+		eeprom_read_dword(&EEcurrentTelemetryBitmap[1]),
+		eeprom_read_dword(&EEcurrentTelemetryBitmap[2]),
+		eeprom_read_word(&EEcurrentTelemetryVersion),
+		eeprom_read_byte(&EEEpochLock)
+		);
+		uint16_t commPromEnd = eeprom_read_word(&EEcommPromEnd);
+
+		for(int j=0; j < sizeOfSample; j++)
+		{
+			uint8_t data[3];
+			uint8_t error;
+			data[0] = commPromEnd >> 8;
+			data[1] = commPromEnd;
+			data[2] = output[j];
+			while((error = i2cMasterSendNI(0b10100000, 3, data)) != I2C_OK);
+            wdt_reset();
+			commPromEnd++;
+		}
+		eeprom_write_word(&EEcommPromEnd, commPromEnd);
+		flushSatQueue();
+		
 }
 
 struct gpsData currentPositionData;
